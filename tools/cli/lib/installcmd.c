@@ -446,8 +446,8 @@ JDPkgList(
     struct json_dump *jd_pkg = NULL;
     CHECK_JD_NULL(jd_list);
 
-    jd_lis
-t_start(jd_list);
+    jd_list_start(jd_list);
+
     for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
     {
         jd_pkg = jd_create(0);
@@ -580,9 +580,8 @@ PrintSolvedInfo(
     }
     if(pSolvedPkgInfo->pPkgsNotAvailable)
     {
-        dwError = Print
+        dwError = PrintNotAvailablePackages(pSolvedPkgInfo->pPkgsNotAvailable);
 
-NotAvailablePackages(pSolvedPkgInfo->pPkgsNotAvailable);
         BAIL_ON_CLI_ERROR(dwError);
     }
     if(pSolvedPkgInfo->pPkgsToInstall)
