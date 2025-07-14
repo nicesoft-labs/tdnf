@@ -601,7 +601,6 @@ TDNFOpenHandle(
     char *pszCacheDir = NULL;
     char *pszRepoDir = NULL;
     int nHasOptReposdir = 0;
-    PTDNF_CMD_OPT pOpt = NULL;
 
     if(!pArgs || !ppTdnf)
     {
