@@ -85,6 +85,7 @@ TDNFReadConfig(
     pConf->nInstallOnlyLimit = 1;
     pConf->nCleanRequirementsOnRemove = 0;
     pConf->nKeepCache = 0;
+    pConf->nColor = 1;
     pConf->nOpenMax = TDNF_DEFAULT_OPENMAX;
 
     register_ini(NULL);
@@ -133,6 +134,10 @@ TDNFReadConfig(
         else if (strcmp(cn->name, TDNF_CONF_KEY_KEEP_CACHE) == 0)
         {
             pConf->nKeepCache = isTrue(cn->value);
+        }
+        else if (strcmp(cn->name, TDNF_CONF_KEY_COLOR) == 0)
+        {
+            pConf->nColor = isTrue(cn->value);
         }
         else if (strcmp(cn->name, TDNF_CONF_KEY_REPOSDIR) == 0 ||
                  strcmp(cn->name, TDNF_CONF_KEY_REPODIR) == 0)
