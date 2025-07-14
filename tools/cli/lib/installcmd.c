@@ -7,7 +7,9 @@
  *
  *            Инструмент командной строки
  *
- * Авторы   : Приеш Падмавиласом (ppadmavilasom@vmware.com)
+ * Copyright (C) 2025 ООО "НАЙС СОФТ ГРУПП" (ИНН: 5024245440)
+ * Email: <niceos@ncsgp.ru>
+ * Код не подлежит изменению без разрешения правообладателя.
  */
 
 #include "includes.h"
@@ -296,7 +298,7 @@ TDNFCliAskForAction(
     {
         int nAnswer = 0;
 
-        dwError = TDNFYesOrNo(pCmdArgs, "👉 Продолжить? [д/Н]", &nAnswer);
+        dwError = TDNFYesOrNo(pCmdArgs, "👉 Продолжить? [y/N]", &nAnswer);
         BAIL_ON_CLI_ERROR(dwError);
 
         if(!nAnswer)
