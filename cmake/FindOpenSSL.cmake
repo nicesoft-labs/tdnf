@@ -6,7 +6,7 @@
 find_path(OPENSSL_INCLUDE_DIR openssl/sha.h)
 find_library(OPENSSL_LIBRARY NAMES libssl.so)
 
-find_package_handle_standard_args(libssl DEFAULT_MSG
+find_package_handle_standard_args(OpenSSL DEFAULT_MSG
                                   OPENSSL_LIBRARY OPENSSL_INCLUDE_DIR)
 
 set(OPENSSL_LIBRARIES ${OPENSSL_LIBRARY})
