@@ -799,7 +799,6 @@ PrintAction(
         ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
 
-        pr_info("\342\224\202");
         pr_info(
             "%-*s %-*s %-*s %-*s %-*s %*s\n",
             nColWidths[0],
