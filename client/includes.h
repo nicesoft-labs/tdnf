@@ -42,6 +42,7 @@
 #include <rpm/rpmts.h>
 #include <rpm/rpmkeyring.h>
 #include <rpm/header.h>
+#include <rpm/rpmmacro.h>
 
 //libcurl
 #include <curl/curl.h>
