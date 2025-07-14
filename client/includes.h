@@ -41,6 +41,7 @@
 #include <rpm/rpmps.h>
 #include <rpm/rpmts.h>
 #include <rpm/rpmkeyring.h>
+#include <rpm/rpmpgp.h>
 #include <rpm/header.h>
 #include <rpm/rpmmacro.h>
 
