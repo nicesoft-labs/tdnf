@@ -59,6 +59,7 @@
 #include "../common/structs.h"
 #include "../common/prototypes.h"
 #include "prototypes.h"
+#include <i18n.h>
 
 #include "config.h"
 
