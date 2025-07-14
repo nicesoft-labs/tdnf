@@ -1103,11 +1103,11 @@ TDNFRpmCB(
                 break;
             if(what == RPMCALLBACK_INST_START)
             {
-                pr_info("%s", "Installing/Updating: ");
+                pr_info("%s", TDNFTranslate("Installing/Updating: "));
             }
             else
             {
-                pr_info("%s", "Removing: ");
+                pr_info("%s", TDNFTranslate("Removing: "));
             }
             {
                 char* pszNevra = NULL;
