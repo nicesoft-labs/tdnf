@@ -153,7 +153,7 @@ TDNFLoadTranslations(const char *lang)
         }
         *p = '\0';
         orig = (char*)TDNFTrim(line);
-        trans = TDNFTrim(p + 1);
+        trans = (char*)TDNFTrim(p + 1);
         if (*trans)
         {
             size_t len = strlen(trans);
