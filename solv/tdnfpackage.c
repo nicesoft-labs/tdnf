@@ -1823,13 +1823,15 @@ check_for_providers(
         return ERROR_TDNF_SOLV_FAILED;
     }
 
-    for (int32_t i = 0; end > beg; beg++)
+    size_t i = 0;
+    for (; end > beg && i < sizeof(pkgname) - 1; beg++)
     {
         if (*beg != ' ')
         {
             pkgname[i++] = *beg;
         }
     }
+    pkgname[i] = '\0';
 
     if (!strcmp(pkgname, prv_pkgname))
     {
@@ -1841,7 +1843,8 @@ check_for_providers(
     {
         SolvFreePackageList(pAvailablePkgList);
     }
-    strcpy(prv_pkgname, pkgname);
+    strncpy(prv_pkgname, pkgname, sizeof(pkgname) - 1);
+    prv_pkgname[sizeof(pkgname) - 1] = '\0';
 
     return dwError;
 }
