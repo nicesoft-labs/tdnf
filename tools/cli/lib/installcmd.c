@@ -306,7 +306,7 @@ TDNFCliAskForAction(
     {
         int nAnswer = 0;
 
-        dwError = TDNFYesOrNo(pCmdArgs, "\xF0\x9F\x91\x89 Proceed? [y/N]", &nAnswer);
+        dwError = TDNFYesOrNo(pCmdArgs, "\xF0\x9F\x91\x89 Proceed? [y/ COLOR_GREEN N COLOR_RESET]", &nAnswer);
         BAIL_ON_CLI_ERROR(dwError);
 
         if(!nAnswer)
