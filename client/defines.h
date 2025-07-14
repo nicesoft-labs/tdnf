@@ -90,6 +90,7 @@ typedef enum
 #define TDNF_CONF_KEY_EXCLUDE             "excludepkgs"
 #define TDNF_CONF_KEY_MINVERSIONS         "minversions"
 #define TDNF_CONF_KEY_OPENMAX             "openmax"
+#define TDNF_CONF_KEY_MAX_PARALLEL_DOWNLOADS "max_parallel_downloads"
 #define TDNF_CONF_KEY_CHECK_UPDATE_COMPAT "dnf_check_update_compat"
 #define TDNF_CONF_KEY_DISTROSYNC_REINSTALL_CHANGED "distrosync_reinstall_changed"
 
@@ -146,6 +147,7 @@ typedef enum
 #define TDNF_REPO_METADATA_EXPIRE_NEVER   "never"
 
 #define TDNF_DEFAULT_OPENMAX              1024
+#define TDNF_DEFAULT_MAX_PARALLEL_DOWNLOADS 5
 
 // repo default settings
 #define TDNF_REPO_DEFAULT_ENABLED            0
