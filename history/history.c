@@ -720,10 +720,8 @@ int db_set_auto_flag_byid(sqlite3 *db, int trans_id, int name_id, int value)
     int rc = 0, step;
     sqlite3_stmt *res = NULL;
 
-    /* TODO: check if entry with trans_id and name_id already exists and update,
-       instead of creating a new entry */
     rc = sqlite3_prepare_v2(db,
-        "INSERT INTO flag_set(trans_id, name_id, value) VALUES (?, ?, ?);",
+        "SELECT Id FROM flag_set WHERE trans_id = ? AND name_id = ?;",
         -1, &res, 0);
     check_db_rc(db, rc);
 
@@ -733,8 +731,38 @@ int db_set_auto_flag_byid(sqlite3 *db, int trans_id, int name_id, int value)
     rc = sqlite3_bind_int(res, 2, name_id);
     check_db_rc(db, rc);
 
-    rc = sqlite3_bind_int(res, 3, value);
-    check_db_rc(db, rc);
+    step = sqlite3_step(res);
+
+    if (step == SQLITE_ROW) {
+        int id = sqlite3_column_int(res, 0);
+        sqlite3_finalize(res); res = NULL;
+
+        rc = sqlite3_prepare_v2(db,
+            "UPDATE flag_set SET value = ? WHERE Id = ?;",
+            -1, &res, 0);
+        check_db_rc(db, rc);
+
+        rc = sqlite3_bind_int(res, 1, value);
+        check_db_rc(db, rc);
+
+        rc = sqlite3_bind_int(res, 2, id);
+        check_db_rc(db, rc);
+    } else {
+        sqlite3_finalize(res); res = NULL;
+        rc = sqlite3_prepare_v2(db,
+            "INSERT INTO flag_set(trans_id, name_id, value) VALUES (?, ?, ?);",
+            -1, &res, 0);
+        check_db_rc(db, rc);
+
+        rc = sqlite3_bind_int(res, 1, trans_id);
+        check_db_rc(db, rc);
+
+        rc = sqlite3_bind_int(res, 2, name_id);
+        check_db_rc(db, rc);
+
+        rc = sqlite3_bind_int(res, 3, value);
+        check_db_rc(db, rc);
+    }
 
     step = sqlite3_step(res);
     check_cond(step == SQLITE_DONE);
