@@ -15,3 +15,7 @@ add_library(${LIB_TDNF_SOLV} STATIC
     tdnfrepo.c
     simplequery.c
 )
+
+add_executable(checkproviders_test
+    tests/checkproviders_test.c
+)
