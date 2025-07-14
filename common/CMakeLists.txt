@@ -14,5 +14,6 @@ add_library(${LIB_TDNF_COMMON} STATIC
     strings.c
     utils.c
     log.c
+    i18n.c
     lock.c
 )
