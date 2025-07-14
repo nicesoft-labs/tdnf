@@ -357,4 +357,12 @@ TDNFChecksumFromHexDigest(
     const char *hex_digest,
     unsigned char *ppdigest
     );
+
+//i18n.c
+uint32_t
+TDNFLoadTranslations(const char *lang);
+const char *
+TDNFTranslate(const char *msg);
+void
+TDNFFreeTranslations(void);
 #endif /* __COMMON_PROTOTYPES_H__ */
