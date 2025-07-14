@@ -64,6 +64,10 @@ GetColumnWidths(
     uint32_t dwError = 0;
     int nConsoleWidth = 0;
     int nIndex = 0;
+    int nSumPercent = 0;
+    int nBorderWidth = 0;
+    int nAvailWidth = 0;
+    int nUsedWidth = 0;
 
     if(!pnColPercents || !pnColWidths)
     {
@@ -74,9 +78,37 @@ GetColumnWidths(
     dwError = GetConsoleWidth(&nConsoleWidth);
     BAIL_ON_CLI_ERROR(dwError);
 
-    for(nIndex = 0; nIndex < nCount; nIndex++)
+    /* Account for borders and spaces: one starting character and
+       three extra characters per column (space, space, separator) */
+    nBorderWidth = 1 + (3 * nCount);
+    if (nConsoleWidth <= nBorderWidth)
     {
-        pnColWidths[nIndex] = (nConsoleWidth * pnColPercents[nIndex]) / 100;
+        memset(pnColWidths, 0, sizeof(int) * nCount);
+        goto cleanup;
+    }
+
+    nAvailWidth = nConsoleWidth - nBorderWidth;
+
+    for (nIndex = 0; nIndex < nCount; nIndex++)
+    {
+        nSumPercent += pnColPercents[nIndex];
+    }
+
+    if (nSumPercent == 0)
+    {
+        memset(pnColWidths, 0, sizeof(int) * nCount);
+        goto cleanup;
+    }
+
+    for (nIndex = 0; nIndex < nCount; nIndex++)
+    {
+        pnColWidths[nIndex] = (nAvailWidth * pnColPercents[nIndex]) / nSumPercent;
+        nUsedWidth += pnColWidths[nIndex];
+    }
+
+    if (nUsedWidth < nAvailWidth)
+    {
+        pnColWidths[nCount - 1] += (nAvailWidth - nUsedWidth);
     }
 cleanup:
     return dwError;
