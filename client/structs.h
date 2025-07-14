@@ -41,6 +41,14 @@ typedef struct _TDNF_CACHED_RPM_LIST
     PTDNF_CACHED_RPM_ENTRY pHead;
 } TDNF_CACHED_RPM_LIST, *PTDNF_CACHED_RPM_LIST;
 
+typedef struct progress_cb_data {
+    time_t cur_time;
+    time_t prev_time;
+    curl_off_t last_bytes;
+    time_t last_time;
+    char pszData[64];
+} pcb_data;
+
 typedef struct _TDNF_RPM_TS_
 {
     int                     nQuiet;
@@ -49,6 +57,13 @@ typedef struct _TDNF_RPM_TS_
     rpmprobFilterFlags      nProbFilterFlags;
     FD_t                    pFD;
     PTDNF_CACHED_RPM_LIST   pCachedRpmsArray;
+    int                     nPkgsTotal;
+    int                     nPkgsProcessed;
+    int                     nFilesTotal;
+    int                     nFilesProcessed;
+    rpm_loff_t              nBytesTotal;
+    rpm_loff_t              nBytesProcessed;
+    pcb_data                progress;
 } TDNFRPMTS, *PTDNFRPMTS;
 
 typedef struct _TDNF_REPO_METADATA
@@ -74,11 +89,3 @@ typedef struct _TDNF_EVENT_DATA_
     const char *pcszName;
     struct _TDNF_EVENT_DATA_ *pNext;
 } TDNF_EVENT_DATA, *PTDNF_EVENT_DATA;
-
-typedef struct progress_cb_data {
-    time_t cur_time;
-    time_t prev_time;
-    curl_off_t last_bytes;
-    time_t last_time;
-    char pszData[64];
-} pcb_data;
