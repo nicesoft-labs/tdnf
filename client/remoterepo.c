@@ -72,12 +72,31 @@ progress_cb(
     }
     else
     {
-        pr_info("%-35s %10ld %u%% %ld %ld\r",
-                pData->pszData,
-                dlNow,
-                dPercent,
-                (long)speed,
-                (long)eta);
+        const int barw = 50;
+        char bar[barw + 1];
+        int filled = (dPercent * barw) / 100;
+        memset(bar, '#', filled);
+        memset(bar + filled, ' ', barw - filled);
+        bar[barw] = '\0';
+
+        if (GlobalGetColor())
+        {
+            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %ld %ld\r",
+                    pData->pszData,
+                    bar,
+                    dPercent,
+                    (long)speed,
+                    (long)eta);
+        }
+        else
+        {
+            pr_info("%-20s [%s] %3u%% %ld %ld\r",
+                    pData->pszData,
+                    bar,
+                    dPercent,
+                    (long)speed,
+                    (long)eta);
+        }
     }
 
     fflush(stdout);
