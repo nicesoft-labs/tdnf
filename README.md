@@ -59,6 +59,15 @@ without carriage returns.
 The progress bar is shown in green when output goes to a terminal. Use
 `--nocolor` or set `color=0` in `tdnf.conf` to disable colors.
 
+### max_parallel_downloads
+
+The number of packages that TDNF downloads simultaneously is controlled by
+`max_parallel_downloads` in `tdnf.conf`.  Increasing the value can speed up
+updates on fast connections, while reducing it may help on slower or
+resource‑constrained systems.  The default value is `5` which corresponds to the
+`TDNF_DEFAULT_MAX_PARALLEL_DOWNLOADS` build constant.
+
+
 ## Testing
 
 To build and run the test scripts within a container, do:
