@@ -66,28 +66,28 @@ tdnf_print_padded(const char *psz, int nWidth)
 static void
 tdnf_print_border(const int *pnColWidths, int nCols)
 {
-    pr_info("┌");
+    pr_info("+");
     for (int i = 0; i < nCols; ++i)
     {
         for (int j = 0; j < pnColWidths[i] + 2; ++j)
         {
-            pr_info("─");
+            pr_info("-");
         }
-        pr_info("┬");
+        pr_info("+");
     }
-    pr_info("\b┐\n");
+    pr_info("\n");
 }
 
 // Вывод строки таблицы
 static void
 tdnf_print_row(const char *const *ppszCols, const int *pnColWidths, int nCols)
 {
-    pr_info("│");
+    pr_info("|");
     for (int i = 0; i < nCols; ++i)
     {
         pr_info(" ");
         tdnf_print_padded(ppszCols[i] ? ppszCols[i] : "", pnColWidths[i]);
-        pr_info(" │");
+        pr_info(" |");
     }
     pr_info("\n");
 }
