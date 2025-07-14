@@ -6,6 +6,7 @@
 # of the License are located in the COPYING file of this distribution.
 #
 
+cmake_policy(SET CMP0148 OLD)
 find_package(PythonInterp 3.7 REQUIRED)
 find_package(PythonLibs 3.7 REQUIRED)
 
