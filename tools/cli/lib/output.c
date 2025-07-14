@@ -37,7 +37,7 @@ GetConsoleWidth(
     }
 
     dwError = ioctl(STDOUT_FILENO, TIOCGWINSZ, &stWinSize);
-    if(dwError > 0)
+    if(dwError < 0 || stWinSize.ws_col == 0)
     {
         nConsoleWidth = 80;
         dwError = 0;
