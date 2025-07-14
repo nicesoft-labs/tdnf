@@ -46,6 +46,7 @@ typedef struct progress_cb_data {
     time_t prev_time;
     curl_off_t last_bytes;
     time_t last_time;
+    double ema_speed;
     char pszData[64];
 } pcb_data;
 
