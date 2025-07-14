@@ -21,7 +21,7 @@
 
 #include "includes.h"
 
-static TDNF_CMD_ARGS _opt = {0};
+static TDNF_CMD_ARGS _opt = { .nColor = 1 };
 
 static struct option pstOptions[] =
 {
@@ -52,6 +52,7 @@ static struct option pstOptions[] =
     {"nodeps",        no_argument, &_opt.nNoDeps, 1},
     {"nogpgcheck",    no_argument, &_opt.nNoGPGCheck, 1},  //--nogpgcheck
     {"noplugins",     no_argument, 0, 0},                  //--noplugins
+    {"nocolor",       no_argument, &_opt.nColor, 0},      //--nocolor
     {"quiet",         no_argument, &_opt.nQuiet, 1},       //--nogpgcheck
     {"refresh",       no_argument, &_opt.nRefresh, 1},     //--refresh
     {"releasever",    required_argument, 0, 0},            //--releasever
@@ -364,6 +365,7 @@ TDNFCopyOptions(
     pArgs->nSkipBroken    = pOptionArgs->nSkipBroken;
     pArgs->nSource        = pOptionArgs->nSource;
     pArgs->nBuildDeps     = pOptionArgs->nBuildDeps;
+    pArgs->nColor         = pOptionArgs->nColor;
 
 cleanup:
     return dwError;
