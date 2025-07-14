@@ -16,6 +16,8 @@ static const char*
 TDNFGetLocaleFile(const char *lang)
 {
     static char szPath[256];
+    char baseLang[64] = "";
+
     if (!lang || !*lang)
     {
         lang = getenv("TDNF_LANG");
@@ -29,6 +31,24 @@ TDNFGetLocaleFile(const char *lang)
         return NULL;
     }
     snprintf(szPath, sizeof(szPath), "%s/%s.lang", LOCALE_DIR, lang);
+    if (access(szPath, R_OK) != 0)
+    {
+        size_t i = 0;
+        while (lang[i] && lang[i] != '_' && lang[i] != '.')
+        {
+            if (i < sizeof(baseLang) - 1)
+            {
+                baseLang[i] = lang[i];
+            }
+            i++;
+        }
+        baseLang[i < sizeof(baseLang) ? i : sizeof(baseLang) - 1] = '\0';
+
+        if (baseLang[0])
+        {
+            snprintf(szPath, sizeof(szPath), "%s/%s.lang", LOCALE_DIR, baseLang);
+        }
+    }
     return szPath;
 }
 
