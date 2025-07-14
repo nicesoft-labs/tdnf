@@ -34,6 +34,7 @@ add_library(${LIB_TDNF} SHARED
     repo.c
     repoutils.c
     remoterepo.c
+    multidownload.c
     repolist.c
     resolve.c
     rpmtrans.c
