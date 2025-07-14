@@ -171,6 +171,7 @@ typedef struct _TDNF_PKG_INFO
     char **ppszFileList;
     char *pszSourcePkg;
     unsigned char* pbChecksum;
+    char* pszLocalPath;
     PTDNF_PKG_CHANGELOG_ENTRY pChangeLogEntries;
     struct _TDNF_PKG_INFO* pNext;
 }TDNF_PKG_INFO, *PTDNF_PKG_INFO;
@@ -256,6 +257,7 @@ typedef struct _TDNF_CONF
     int nKeepCache;
     int nColor;            //colored progress output
     int nOpenMax;          //set max number of open files
+    int nMaxParallelDownloads; //max concurrent downloads
     int nCheckUpdateCompat;
     int nDistroSyncReinstallChanged;
     char* pszRepoDir;
