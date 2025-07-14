@@ -219,7 +219,7 @@ TDNFCliAskForAction(
     {
         int nAnswer = 0;
 
-        dwError = TDNFYesOrNo(pCmdArgs, "Is this ok [y/N]: ", &nAnswer);
+        dwError = TDNFYesOrNo(pCmdArgs, "\xF0\x9F\x91\x89 Proceed? [y/N]", &nAnswer);
         BAIL_ON_CLI_ERROR(dwError);
 
         if(!nAnswer)
@@ -684,32 +684,76 @@ PrintAction(
     switch(nAlterType)
     {
         case ALTER_INSTALL:
-            pr_info("\n" COLOR_GREEN "Installing:" COLOR_RESET);
+            pr_info("\n" COLOR_GREEN "\xF0\x9F\x93\xA5 [tdnf] \xE2\x86\x92 INSTALLING PACKAGE" COLOR_RESET "\n\n");
             break;
         case ALTER_UPGRADE:
-            pr_info("\n" COLOR_CYAN "Upgrading:" COLOR_RESET);
+            pr_info("\n" COLOR_CYAN "\xF0\x9F\x94\x84 [tdnf] \xE2\x86\x92 UPGRADING PACKAGE" COLOR_RESET "\n\n");
             break;
         case ALTER_ERASE:
-            pr_info("\n" COLOR_RED "Removing:" COLOR_RESET);
+            pr_info("\n" COLOR_RED "\xF0\x9F\xA7\xB9 [tdnf] \xE2\x86\x92 REMOVING PACKAGE" COLOR_RESET "\n\n");
             break;
         case ALTER_DOWNGRADE:
-            pr_info("\n" COLOR_YELLOW "Downgrading:" COLOR_RESET);
+            pr_info("\n" COLOR_YELLOW "\xF0\x9F\x94\xBC [tdnf] \xE2\x86\x92 DOWNGRADING PACKAGE" COLOR_RESET "\n\n");
             break;
         case ALTER_REINSTALL:
-            pr_info("\n" COLOR_MAGENTA "Reinstalling:" COLOR_RESET);
+            pr_info("\n" COLOR_MAGENTA "\xF0\x9F\x8C\x80 [tdnf] \xE2\x86\x92 REINSTALLING PACKAGE" COLOR_RESET "\n\n");
             break;
         case ALTER_OBSOLETED:
             pr_info("\n" COLOR_YELLOW "Obsoleting:" COLOR_RESET);
             break;
         default:
-            dwError = ERROR_TDNF_INVALID_PARAMETER;
+            pr_info("\n" COLOR_YELLOW "\xF0\x9F\x97\xBF [tdnf] \xE2\x86\x92 OBSOLETING PACKAGE" COLOR_RESET "\n\n");
             BAIL_ON_CLI_ERROR(dwError);
     }
-    pr_info("\n");
+    pr_info("\xF0\x9F\x93\xA6 Package Info:\n");
 
     dwError = GetColumnWidths(COL_COUNT, nColPercents, nColWidths);
     BAIL_ON_CLI_ERROR(dwError);
 
+    // Table header
+    {
+        int i = 0, j = 0;
+        const char *ppszHeader[COL_COUNT] = {
+            "\xF0\x9F\x93\x9B Name",
+            "\xF0\x9F\x96\xA5 Arch",
+            "\xF0\x9F\x8F\xB7 Version",
+            "\xF0\x9F\x8C\x90 Repository",
+            "\xF0\x9F\x92\xBE Installed",
+            "\xE2\xAC\x87\xEF\xB8\x8F Download"
+        };
+
+        pr_info("\342\224\214");
+        for(i = 0; i < COL_COUNT; ++i)
+        {
+            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
+            if(i == COL_COUNT - 1)
+                pr_info("\342\224\220\n");
+            else
+                pr_info("\342\224\254");
+        }
+
+        pr_info("\342\224\202");
+        for(i = 0; i < COL_COUNT; ++i)
+        {
+            pr_info(" %-*s ", nColWidths[i], ppszHeader[i]);
+            if(i == COL_COUNT - 1)
+                pr_info("\342\224\202\n");
+            else
+                pr_info("\342\224\202");
+        }
+
+        pr_info("\342\224\234");
+        for(i = 0; i < COL_COUNT; ++i)
+        {
+            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
+            if(i == COL_COUNT - 1)
+                pr_info("\342\224\244\n");
+            else
+                pr_info("\342\224\262");
+        }
+    }
+
+    
     for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
     {
         nTotalInstallSize += pPkgInfo->dwInstallSizeBytes;
@@ -754,29 +798,34 @@ PrintAction(
                                  pszEmptyString : pPkgInfo->pszFormattedSize;
         ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
-        pr_info(
-            "%-*s %-*s %-*s %-*s %-*s %*s\n",
-            nColWidths[0],
-            ppszInfoToPrint[0],
-            nColWidths[1],
-            ppszInfoToPrint[1],
-            nColWidths[2],
-            ppszInfoToPrint[2],
-            nColWidths[3],
-            ppszInfoToPrint[3],
-            nColWidths[4],
-            ppszInfoToPrint[4],
-            nColWidths[5],
-            ppszInfoToPrint[5]);
+
+        pr_info("\342\224\202");
+        pr_info(" %-*s \342\224\202 %-*s \342\224\202 %-*s \342\224\202 %-*s \342\224\202 %*s \342\224\202 %*s \342\224\202\n",
+                nColWidths[0], ppszInfoToPrint[0],
+                nColWidths[1], ppszInfoToPrint[1],
+                nColWidths[2], ppszInfoToPrint[2],
+                nColWidths[3], ppszInfoToPrint[3],
+                nColWidths[4], ppszInfoToPrint[4],
+                nColWidths[5], ppszInfoToPrint[5]);
+    }
+
+    pr_info("\342\224\224");
+    for(int i = 0; i < COL_COUNT; ++i)
+    {
+        for(int j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
+        if(i == COL_COUNT - 1)
+            pr_info("\342\224\230\n");
+        else
+            pr_info("\342\224\252");
     }
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info("\nTotal installed size: %s\n", pszTotalInstallSize);
+    pr_info("\n\xF0\x9F\x93\x8A Totals:\n   \xE2\x80\xA2 Installed Size: \xF0\x9F\x92\xBE %s\n", pszTotalInstallSize);
 
     dwError = TDNFUtilsFormatSize(nTotalDownloadSize, &pszTotalDownloadSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info("Total download size: %s\n", pszTotalDownloadSize);
+    pr_info("   \xE2\x80\xA2 Download Size : \xE2\xAC\x87\xEF\xB8\x8F %s\n", pszTotalDownloadSize);
 
 cleanup:
     TDNFFreeMemory(pszTotalInstallSize);
