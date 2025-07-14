@@ -138,6 +138,274 @@ error:
     return dwError;
 }
 
+static uint32_t
+TDNFPreDownloadPkgs(
+    PTDNF pTdnf,
+    PTDNF_PKG_INFO pInfos
+    )
+{
+    uint32_t dwError = 0;
+    PTDNF_PKG_INFO pInfo = NULL;
+    int nNeed = 0;
+    PTDNF_REPO_DATA pRepo = NULL;
+    char *pszRemotePath = NULL;
+    char *pszCacheDir = NULL;
+    char *pszNormCacheDir = NULL;
+    char *pszFilePath = NULL;
+    char *pszNormPath = NULL;
+    char *pszDir = NULL;
+    char *pszTmp = NULL;
+    char *pszUrl = NULL;
+    char *pszUserPass = NULL;
+    CURL *pCurl = NULL;
+    FILE *fp = NULL;
+
+    for(pInfo = pInfos; pInfo; pInfo = pInfo->pNext)
+    {
+        if(pInfo->pszLocation && pInfo->pszLocation[0] != '/')
+        {
+            nNeed++;
+        }
+    }
+
+    if(nNeed <= 1 || pTdnf->pConf->nMaxParallelDownloads <= 1)
+    {
+        return 0;
+    }
+
+    dwError = TDNFMultiBegin(pTdnf->pConf->nMaxParallelDownloads);
+    BAIL_ON_TDNF_ERROR(dwError);
+
+    for(pInfo = pInfos; pInfo; pInfo = pInfo->pNext)
+    {
+        TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+        TDNF_SAFE_FREE_MEMORY(pszCacheDir);
+        TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
+        TDNF_SAFE_FREE_MEMORY(pszFilePath);
+        TDNF_SAFE_FREE_MEMORY(pszNormPath);
+        TDNF_SAFE_FREE_MEMORY(pszDir);
+        TDNF_SAFE_FREE_MEMORY(pszTmp);
+        TDNF_SAFE_FREE_MEMORY(pszUrl);
+        TDNF_SAFE_FREE_MEMORY(pszUserPass);
+        if(fp)
+        {
+            fclose(fp);
+            fp = NULL;
+        }
+        if(pCurl)
+        {
+            curl_easy_cleanup(pCurl);
+            pCurl = NULL;
+        }
+
+        if(!pInfo->pszLocation || pInfo->pszLocation[0] == '/')
+        {
+            continue;
+        }
+
+        dwError = TDNFFindRepoById(pTdnf, pInfo->pszRepoName, &pRepo);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        if(!pTdnf->pArgs->nDownloadOnly || pTdnf->pArgs->pszDownloadDir == NULL)
+        {
+            int i = 0, nInPlace = 0;
+            for(i = 0; pRepo->ppszBaseUrls && pRepo->ppszBaseUrls[i]; i++)
+            {
+                if(strncasecmp(pRepo->ppszBaseUrls[i], "file://", 7) == 0)
+                {
+                    dwError = TDNFJoinPath(&pszFilePath,
+                                           &(pRepo->ppszBaseUrls[i][7]),
+                                           pInfo->pszLocation,
+                                           NULL);
+                    BAIL_ON_TDNF_ERROR(dwError);
+                    if(access(pszFilePath, F_OK) == 0)
+                    {
+                        pInfo->pszLocalPath = pszFilePath;
+                        nInPlace = 1;
+                        break;
+                    }
+                    TDNF_SAFE_FREE_MEMORY(pszFilePath);
+                }
+            }
+            if(nInPlace)
+            {
+                continue;
+            }
+
+            dwError = TDNFJoinPath(&pszCacheDir,
+                                   pTdnf->pConf->pszCacheDir,
+                                   pRepo->pszId,
+                                   "rpms",
+                                   NULL);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            dwError = TDNFNormalizePath(pszCacheDir, &pszNormCacheDir);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            dwError = TDNFPathFromUri(pInfo->pszLocation, &pszRemotePath);
+            if(dwError == ERROR_TDNF_URL_INVALID)
+            {
+                dwError = TDNFAllocateString(pInfo->pszLocation, &pszRemotePath);
+            }
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            dwError = TDNFJoinPath(&pszFilePath, pszNormCacheDir, pszRemotePath, NULL);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            dwError = TDNFNormalizePath(pszFilePath, &pszNormPath);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            if(strncmp(pszNormCacheDir, pszNormPath, strlen(pszNormCacheDir)))
+            {
+                dwError = ERROR_TDNF_URL_INVALID;
+                BAIL_ON_TDNF_ERROR(dwError);
+            }
+
+            dwError = TDNFDirName(pszNormPath, &pszDir);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            if(access(pszDir, F_OK))
+            {
+                if(errno != ENOENT)
+                {
+                    dwError = errno;
+                    BAIL_ON_TDNF_SYSTEM_ERROR(dwError);
+                }
+                dwError = TDNFUtilsMakeDirs(pszDir);
+                BAIL_ON_TDNF_ERROR(dwError);
+            }
+
+            if(access(pszNormPath, F_OK) == 0)
+            {
+                pInfo->pszLocalPath = pszNormPath;
+                TDNF_SAFE_FREE_MEMORY(pszDir);
+                TDNF_SAFE_FREE_MEMORY(pszCacheDir);
+                TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
+                TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+                continue;
+            }
+        }
+        else
+        {
+            dwError = TDNFPathFromUri(pInfo->pszLocation, &pszRemotePath);
+            if(dwError == ERROR_TDNF_URL_INVALID)
+            {
+                dwError = TDNFAllocateString(pInfo->pszLocation, &pszRemotePath);
+            }
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            char *pszFileName = basename(pszRemotePath);
+            dwError = TDNFJoinPath(&pszNormPath, pTdnf->pArgs->pszDownloadDir, pszFileName, NULL);
+            BAIL_ON_TDNF_ERROR(dwError);
+
+            if(access(pszNormPath, F_OK) == 0)
+            {
+                pInfo->pszLocalPath = pszNormPath;
+                TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+                continue;
+            }
+        }
+
+        dwError = TDNFAllocateStringPrintf(&pszTmp, "%s.tmp", pszNormPath);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        fp = fopen(pszTmp, "wb");
+        if(!fp)
+        {
+            dwError = errno;
+            BAIL_ON_TDNF_SYSTEM_ERROR_UNCOND(dwError);
+        }
+
+        pCurl = curl_easy_init();
+        if(!pCurl)
+        {
+            dwError = ERROR_TDNF_CURL_INIT;
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        dwError = TDNFRepoGetUserPass(pTdnf, pRepo, &pszUserPass);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        if(!IsNullOrEmptyString(pszUserPass))
+        {
+            dwError = curl_easy_setopt(pCurl, CURLOPT_USERPWD, pszUserPass);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        dwError = TDNFRepoApplyProxySettings(pTdnf->pConf, pCurl);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        dwError = TDNFRepoApplyDownloadSettings(pRepo, pCurl);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        dwError = TDNFRepoApplySSLSettings(pRepo, pCurl);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        if(pRepo->ppszBaseUrls && pRepo->ppszBaseUrls[0])
+        {
+            dwError = TDNFJoinPath(&pszUrl, pRepo->ppszBaseUrls[0], pInfo->pszLocation, NULL);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+        else
+        {
+            dwError = TDNFAllocateString(pInfo->pszLocation, &pszUrl);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        dwError = curl_easy_setopt(pCurl, CURLOPT_URL, pszUrl);
+        BAIL_ON_TDNF_CURL_ERROR(dwError);
+
+        dwError = curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
+        BAIL_ON_TDNF_CURL_ERROR(dwError);
+
+        const char *pszProgress = NULL;
+        if(!pTdnf->pArgs->nQuiet && (isatty(STDOUT_FILENO) || pTdnf->pArgs->nVerbose))
+        {
+            pszProgress = pInfo->pszName;
+        }
+
+        dwError = TDNFMultiAdd(pCurl, fp, pszTmp, pszNormPath, &pInfo->pszLocalPath, pszProgress);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        TDNF_SAFE_FREE_MEMORY(pszUserPass);
+        TDNF_SAFE_FREE_MEMORY(pszUrl);
+        TDNF_SAFE_FREE_MEMORY(pszTmp);
+        TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+        TDNF_SAFE_FREE_MEMORY(pszCacheDir);
+        TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
+        TDNF_SAFE_FREE_MEMORY(pszDir);
+        TDNF_SAFE_FREE_MEMORY(pszFilePath);
+        TDNF_SAFE_FREE_MEMORY(pszNormPath);
+    }
+
+    dwError = TDNFMultiPerform();
+    BAIL_ON_TDNF_ERROR(dwError);
+
+cleanup:
+    TDNF_SAFE_FREE_MEMORY(pszUserPass);
+    TDNF_SAFE_FREE_MEMORY(pszUrl);
+    if(fp)
+    {
+        fclose(fp);
+    }
+    if(pCurl)
+    {
+        curl_easy_cleanup(pCurl);
+    }
+    TDNF_SAFE_FREE_MEMORY(pszTmp);
+    TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+    TDNF_SAFE_FREE_MEMORY(pszCacheDir);
+    TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
+    TDNF_SAFE_FREE_MEMORY(pszDir);
+    TDNF_SAFE_FREE_MEMORY(pszFilePath);
+    TDNF_SAFE_FREE_MEMORY(pszNormPath);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 uint32_t
 TDNFRpmCreateTS(
     PTDNF pTdnf,
@@ -882,6 +1150,9 @@ TDNFTransAddInstallPkgs(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+    dwError = TDNFPreDownloadPkgs(pTdnf, pInfos);
+    BAIL_ON_TDNF_ERROR(dwError);
+
     for (pInfo = pInfos; pInfo; pInfo = pInfo->pNext)
     {
         PTDNF_REPO_DATA pRepo = NULL;
@@ -938,7 +1209,12 @@ TDNFTransAddInstallPkg(
     pszPackageLocation = pInfo->pszLocation;
     pszPkgName = pInfo->pszName;
 
-    if (pszPackageLocation[0] == '/')
+    if (pInfo->pszLocalPath)
+    {
+        dwError = TDNFAllocateString(pInfo->pszLocalPath, &pszFilePath);
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+    else if (pszPackageLocation[0] == '/')
     {
         dwError = TDNFAllocateString(
                       pszPackageLocation,
