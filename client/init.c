@@ -64,6 +64,8 @@ TDNFCloneCmdArgs(
     pCmdArgs->nSkipBroken    = pCmdArgsIn->nSkipBroken;
     pCmdArgs->nSource        = pCmdArgsIn->nSource;
     pCmdArgs->nBuildDeps     = pCmdArgsIn->nBuildDeps;
+    pCmdArgs->nColor         = pCmdArgsIn->nColor;
+
 
     pCmdArgs->nArgc = pCmdArgsIn->nArgc;
     pCmdArgs->ppszArgv = pCmdArgsIn->ppszArgv;
