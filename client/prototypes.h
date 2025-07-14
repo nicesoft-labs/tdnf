@@ -246,6 +246,16 @@ TDNFDownloadPackageToDirectory(
     char** ppszFilePath
     );
 
+uint32_t
+TDNFMultiBegin(long nMax);
+
+uint32_t
+TDNFMultiAdd(CURL *pCurl, FILE *fp, const char *pszTmp, const char *pszDest,
+             char **ppszFilePath, const char *pszProgress);
+
+uint32_t
+TDNFMultiPerform(void);
+
 //packageutils.c
 uint32_t
 TDNFMatchForReinstall(
