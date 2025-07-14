@@ -432,15 +432,18 @@ TDNFCliRepoListCommand(
     {
         if(pRepoList)
         {
-            pr_crit("%-20s%-41s%-9s\n", "repo id", "repo name", "status");
+            pr_crit(COLOR_BLUE "%-20s%-41s%-9s" COLOR_RESET "\n",
+                    "repo id", "repo name", "status");
         }
         for(pRepo = pRepoList; pRepo; pRepo = pRepo->pNext)
         {
             pr_crit(
-                "%-19s %-40s %-9s\n",
+                "%-19s %-40s %s%-9s%s\n",
                 pRepo->pszId,
                 pRepo->pszName,
-                pRepo->nEnabled ? "enabled" : "disabled");
+                pRepo->nEnabled ? COLOR_GREEN : COLOR_RED,
+                pRepo->nEnabled ? "enabled" : "disabled",
+                COLOR_RESET);
         }
     }
 
@@ -511,7 +514,11 @@ TDNFCliSearchCommand(
         for(dwIndex = 0; dwIndex < dwCount; ++dwIndex)
         {
             pPkg = &pPkgInfo[dwIndex];
-            pr_crit("%s : %s\n", pPkg->pszName, pPkg->pszSummary);
+            pr_crit("%s%s%s : %s\n",
+                    COLOR_CYAN,
+                    pPkg->pszName,
+                    COLOR_RESET,
+                    pPkg->pszSummary);
         }
     }
 
