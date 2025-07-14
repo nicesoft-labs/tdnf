@@ -20,6 +20,8 @@
  */
 
 #include "includes.h"
+#include <locale.h>
+
 
 static TDNF_CLI_CMD_MAP arCmdMap[] =
 {
@@ -61,6 +63,8 @@ int main(int argc, char **argv)
     PTDNF pTdnf = NULL;
     PTDNF_CMD_ARGS pCmdArgs = NULL;
     TDNF_CLI_CMD_MAP *pCmd = NULL;
+
+    setlocale(LC_ALL, "");
 
     dwError = TDNFCliParseArgs(argc, argv, &pCmdArgs);
     BAIL_ON_CLI_ERROR(dwError);
