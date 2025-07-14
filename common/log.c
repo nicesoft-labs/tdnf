@@ -11,6 +11,8 @@
 static bool isQuiet = false;
 static bool isJson = false;
 static bool isDnfCheckUpdateCompat = false;
+static bool useColor = true;
+
 
 void GlobalSetQuiet(int32_t val)
 {
@@ -35,6 +37,17 @@ void GlobalSetDnfCheckUpdateCompat(int32_t val)
         isDnfCheckUpdateCompat = true;
     }
 }
+
+void GlobalSetColor(int32_t val)
+{
+    useColor = val > 0;
+}
+
+bool GlobalGetColor()
+{
+    return useColor;
+}
+
 
 bool GlobalGetDnfCheckUpdateCompat()
 {
