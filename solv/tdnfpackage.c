@@ -1791,7 +1791,8 @@ check_for_providers(
     PSolvSack pSack,
     SolverRuleinfo type,
     const char *pszProblem,
-    char *prv_pkgname
+    char *prv_pkgname,
+    size_t pkgname_size
     )
 {
     char *beg;
@@ -1800,7 +1801,7 @@ check_for_providers(
     char pkgname[256] = {0};
     PSolvPackageList pAvailablePkgList = NULL;
 
-    if (!pSack || !prv_pkgname || !pszProblem)
+    if (!pSack || !prv_pkgname || !pszProblem || pkgname_size == 0)
     {
         return ERROR_TDNF_INVALID_PARAMETER;
     }
@@ -1843,9 +1844,8 @@ check_for_providers(
     {
         SolvFreePackageList(pAvailablePkgList);
     }
-    strncpy(prv_pkgname, pkgname, sizeof(pkgname) - 1);
-    prv_pkgname[sizeof(pkgname) - 1] = '\0';
-
+    snprintf(prv_pkgname, pkgname_size, "%s", pkgname);
+    
     return dwError;
 }
 
@@ -1891,7 +1891,8 @@ SolvReportProblems(
         if (dwSkipProblem != SKIPPROBLEM_NONE &&
             type == SOLVER_RULE_PKG_REQUIRES)
         {
-            if (!check_for_providers(pSack, type, pszProblem, prv_pkgname))
+            if (!check_for_providers(pSack, type, pszProblem, prv_pkgname,
+                                    sizeof(prv_pkgname)))
             {
                 continue;
             }
