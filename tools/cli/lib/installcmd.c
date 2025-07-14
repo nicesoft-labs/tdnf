@@ -714,12 +714,12 @@ PrintAction(
     {
         int i = 0, j = 0;
         const char *ppszHeader[COL_COUNT] = {
-            "\xF0\x9F\x93\x9B Name",
-            "\xF0\x9F\x96\xA5 Arch",
-            "\xF0\x9F\x8F\xB7 Version",
-            "\xF0\x9F\x8C\x90 Repository",
-            "\xF0\x9F\x92\xBE Installed",
-            "\xE2\xAC\x87\xEF\xB8\x8F Download"
+            "Name",
+            "Arch",
+            "Version",
+            "Repository",
+            "Installed",
+            "Download"
         };
 
         pr_info("\342\224\214");
