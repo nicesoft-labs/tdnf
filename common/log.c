@@ -82,6 +82,7 @@ void log_console(int32_t loglevel, const char *format, ...)
         goto end;
     }
 
+    format = TDNFTranslate(format);
     vfprintf(stream, format, args);
     fflush(stream);
 end:
