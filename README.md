@@ -43,6 +43,19 @@ run:
 
 You should see a list of installed packages and their related info
 
+### Download progress output
+
+When tdnf downloads files it now reports the transfer speed and
+estimated time remaining.  In a terminal the output is updated in
+place and has the format:
+
+```
+<label> <bytes> <percent> <speed B/s> <eta s>
+```
+
+When stdout is not a terminal the same fields are printed one per line
+without carriage returns.
+
 ## Testing
 
 To build and run the test scripts within a container, do:
