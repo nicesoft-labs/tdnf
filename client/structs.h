@@ -78,5 +78,7 @@ typedef struct _TDNF_EVENT_DATA_
 typedef struct progress_cb_data {
     time_t cur_time;
     time_t prev_time;
+    curl_off_t last_bytes;
+    time_t last_time;
     char pszData[64];
 } pcb_data;
