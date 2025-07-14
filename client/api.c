@@ -37,6 +37,7 @@ static void TdnfExitHandler(void)
     }
 
     tdnflockFree(instance_lock);
+    TDNFFreeTranslations();
 }
 
 static void IsTdnfAlreadyRunning(void)
@@ -614,6 +615,7 @@ TDNFOpenHandle(
 
     GlobalSetQuiet(pArgs->nQuiet);
     GlobalSetJson(pArgs->nJsonOutput);
+    TDNFLoadTranslations(NULL);
 
     dwError = TDNFAllocateMemory(1, sizeof(TDNF), (void**)&pTdnf);
     BAIL_ON_TDNF_ERROR(dwError);
