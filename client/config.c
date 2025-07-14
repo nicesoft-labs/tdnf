@@ -87,6 +87,7 @@ TDNFReadConfig(
     pConf->nKeepCache = 0;
     pConf->nColor = 1;
     pConf->nOpenMax = TDNF_DEFAULT_OPENMAX;
+    pConf->nMaxParallelDownloads = TDNF_DEFAULT_MAX_PARALLEL_DOWNLOADS;
 
     register_ini(NULL);
     mod_ini = find_cnfmodule("ini");
@@ -171,6 +172,10 @@ TDNFReadConfig(
         else if (strcmp(cn->name, TDNF_CONF_KEY_OPENMAX) == 0)
         {
             pConf->nOpenMax = atoi(cn->value);
+        }
+        else if (strcmp(cn->name, TDNF_CONF_KEY_MAX_PARALLEL_DOWNLOADS) == 0)
+        {
+            pConf->nMaxParallelDownloads = atoi(cn->value);
         }
         else if (strcmp(cn->name, TDNF_CONF_KEY_CHECK_UPDATE_COMPAT) == 0)
         {
