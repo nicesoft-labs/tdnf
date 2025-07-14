@@ -32,6 +32,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <wchar.h>
+
 
 #include <tdnf.h>
 #include <tdnfcli.h>
