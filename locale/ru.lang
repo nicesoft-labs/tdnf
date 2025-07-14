@@ -1,6 +1,6 @@
 # Russian translations for tdnf messages
-Testing transaction=Тестирование транзакции
-Running transaction=Выполнение транзакции
+Testing transaction=Тестирование транзакции\n
+Running transaction=Выполнение транзакции\n
 Installed=При установке
 Version=Версия
 Name=Название
