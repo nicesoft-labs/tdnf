@@ -255,7 +255,7 @@ TDNFCliPrintActionComplete(
 
     if(!nSilent)
     {
-        pr_info("\nComplete!\n");
+        pr_info("\n" COLOR_GREEN "Complete!" COLOR_RESET "\n");
         if (pCmdArgs->nDownloadOnly)
         {
             if (pCmdArgs->pszDownloadDir != NULL)
@@ -562,8 +562,6 @@ PrintNotAvailable(
 {
     uint32_t dwError = 0;
     int i = 0;
-    #define BOLD "\033[1m\033[30m"
-    #define RESET   "\033[0m"
 
     if(!ppszPkgsNotAvailable)
     {
@@ -573,8 +571,10 @@ PrintNotAvailable(
 
     while(ppszPkgsNotAvailable[i])
     {
-        pr_info("No package " BOLD "%s " RESET "available\n",
-                ppszPkgsNotAvailable[i]);
+        pr_info("No package %s%s%s available\n",
+                COLOR_RED,
+                ppszPkgsNotAvailable[i],
+                COLOR_RESET);
         ++i;
     }
 cleanup:
@@ -602,11 +602,13 @@ PrintExistingPackagesSkipped(
     while(pPkgInfo)
     {
         pr_info(
-            "Package %s-%s-%s.%s is already installed, skipping.\n",
+            "Package %s%s-%s-%s.%s%s is already installed, skipping.\n",
+            COLOR_CYAN,
             pPkgInfo->pszName,
             pPkgInfo->pszVersion,
             pPkgInfo->pszRelease,
-            pPkgInfo->pszArch);
+            pPkgInfo->pszArch,
+            COLOR_RESET);
         pPkgInfo = pPkgInfo->pNext;
     }
 
@@ -636,8 +638,10 @@ PrintNotAvailablePackages(
     while(pPkgInfo)
     {
         pr_info(
-            "No package %s available.\n",
-            pPkgInfo->pszName);
+            "No package %s%s%s available.\n",
+            COLOR_RED,
+            pPkgInfo->pszName,
+            COLOR_RESET);
         pPkgInfo = pPkgInfo->pNext;
     }
 
@@ -680,22 +684,22 @@ PrintAction(
     switch(nAlterType)
     {
         case ALTER_INSTALL:
-            pr_info("\nInstalling:");
+            pr_info("\n" COLOR_GREEN "Installing:" COLOR_RESET);
             break;
         case ALTER_UPGRADE:
-            pr_info("\nUpgrading:");
+            pr_info("\n" COLOR_CYAN "Upgrading:" COLOR_RESET);
             break;
         case ALTER_ERASE:
-            pr_info("\nRemoving:");
+            pr_info("\n" COLOR_RED "Removing:" COLOR_RESET);
             break;
         case ALTER_DOWNGRADE:
-            pr_info("\nDowngrading:");
+            pr_info("\n" COLOR_YELLOW "Downgrading:" COLOR_RESET);
             break;
         case ALTER_REINSTALL:
-            pr_info("\nReinstalling:");
+            pr_info("\n" COLOR_MAGENTA "Reinstalling:" COLOR_RESET);
             break;
         case ALTER_OBSOLETED:
-            pr_info("\nObsoleting:");
+            pr_info("\n" COLOR_YELLOW "Obsoleting:" COLOR_RESET);
             break;
         default:
             dwError = ERROR_TDNF_INVALID_PARAMETER;
