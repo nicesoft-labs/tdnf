@@ -23,6 +23,78 @@
 
 #include "rpm/rpmcli.h"
 
+static void
+rpm_print_progress(pcb_data *pData, rpm_loff_t done, rpm_loff_t total)
+{
+    uint32_t dPercent;
+    double speed = 0.0;
+    double eta = 0.0;
+
+    if (total <= 0) {
+        return;
+    }
+
+    if (done < total) {
+        time(&pData->cur_time);
+        if (pData->prev_time &&
+            difftime(pData->cur_time, pData->prev_time) < 1.0) {
+            return;
+        }
+        pData->prev_time = pData->cur_time;
+        dPercent = (uint32_t)(((double)done / (double)total) * 100.0);
+
+        if (pData->last_time &&
+            difftime(pData->cur_time, pData->last_time) > 0.0) {
+            speed = (double)(done - pData->last_bytes) /
+                    difftime(pData->cur_time, pData->last_time);
+            if (speed > 0.0) {
+                eta = (double)(total - done) / speed;
+            }
+        }
+
+        pData->last_time = pData->cur_time;
+        pData->last_bytes = done;
+    } else {
+        pData->prev_time = 0;
+        dPercent = 100;
+    }
+
+    if (!isatty(STDOUT_FILENO)) {
+        pr_info("%s %u%% %ld %ld %ld\n",
+                pData->pszData,
+                dPercent,
+                (long)done,
+                (long)speed,
+                (long)eta);
+    } else {
+        const int barw = 50;
+        char bar[barw + 1];
+        int filled = (dPercent * barw) / 100;
+        memset(bar, '#', filled);
+        memset(bar + filled, ' ', barw - filled);
+        bar[barw] = '\0';
+
+        if (GlobalGetColor()) {
+            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %ld %ld\r",
+                    pData->pszData,
+                    bar,
+                    dPercent,
+                    (long)speed,
+                    (long)eta);
+        } else {
+            pr_info("%-20s [%s] %3u%% %ld %ld\r",
+                    pData->pszData,
+                    bar,
+                    dPercent,
+                    (long)speed,
+                    (long)eta);
+        }
+    }
+
+    fflush(stdout);
+}
+
+
 uint32_t
 TDNFRpmCleanupTS(PTDNF pTdnf,
                  PTDNFRPMTS pTS)
@@ -80,6 +152,14 @@ TDNFRpmCreateTS(
     BAIL_ON_TDNF_ERROR(dwError);
 
     pTS->nQuiet = pTdnf->pArgs->nQuiet;
+    memset(&pTS->progress, 0, sizeof(pTS->progress));
+    strncpy(pTS->progress.pszData, "install", sizeof(pTS->progress.pszData) - 1);
+    pTS->nPkgsProcessed = 0;
+    pTS->nPkgsTotal = 0;
+    pTS->nFilesProcessed = 0;
+    pTS->nFilesTotal = 0;
+    pTS->nBytesProcessed = 0;
+    pTS->nBytesTotal = 0;
 
     dwError = TDNFAllocateMemory(
                   1,
@@ -138,6 +218,8 @@ TDNFRpmCreateTS(
 
     dwError = TDNFPopulateTransaction(pTS, pTdnf, pSolvedInfo);
     BAIL_ON_TDNF_ERROR(dwError);
+    pTS->nPkgsTotal = rpmtsNElements(pTS->pTS);
+
 
     *ppTS = pTS;
 
@@ -751,6 +833,10 @@ TDNFRunTransaction(
             dwError = ERROR_TDNF_TRANSACTION_FAILED;
             BAIL_ON_TDNF_ERROR(dwError);
         }
+        if (!pTdnf->pArgs->nQuiet)
+        {
+            pr_info("\n");
+        }
     }
 
 cleanup:
@@ -1096,6 +1182,23 @@ TDNFRpmCB(
                 Fclose(pTS->pFD);
                 pTS->pFD = NULL;
             }
+            break;
+        case RPMCALLBACK_TRANS_START:
+            pTS->nPkgsTotal = total;
+            pTS->nPkgsProcessed = 0;
+            break;
+        case RPMCALLBACK_TRANS_PROGRESS:
+            pTS->nPkgsProcessed = amount;
+            break;
+        case RPMCALLBACK_ELEM_PROGRESS:
+            pTS->nFilesTotal = total;
+            pTS->nFilesProcessed = amount;
+            break;
+        case RPMCALLBACK_INST_PROGRESS:
+        case RPMCALLBACK_UNINST_PROGRESS:
+            pTS->nBytesTotal = total;
+            pTS->nBytesProcessed = amount;
+            rpm_print_progress(&pTS->progress, amount, total);
             break;
         case RPMCALLBACK_INST_START:
         case RPMCALLBACK_UNINST_START:
