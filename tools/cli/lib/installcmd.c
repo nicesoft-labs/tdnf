@@ -20,6 +20,7 @@
  */
 
 #include "includes.h"
+#define MIN_TABLE_WIDTH 80
 
 static int
 tdnf_display_width(const char *psz)
@@ -794,8 +795,40 @@ PrintAction(
     }
     pr_info("\xF0\x9F\x93\xA6 Package Info:\n");
 
-    dwError = GetColumnWidths(COL_COUNT, nColPercents, nColWidths);
+    int nConsoleWidth = 0;
+    bool bCompact = false;
+
+    dwError = GetConsoleWidth(&nConsoleWidth);
     BAIL_ON_CLI_ERROR(dwError);
+    if(nConsoleWidth < MIN_TABLE_WIDTH)
+    {
+        int nSumPercent = 0;
+        int nAvailWidth = 0;
+        int nBorderWidth = 1 + (3 * COL_COUNT);
+        int nUsedWidth = 0;
+        pr_info("Terminal is narrow, using compact view\n");
+        bCompact = true;
+
+        nAvailWidth = MIN_TABLE_WIDTH - nBorderWidth;
+        for(int i = 0; i < COL_COUNT; ++i)
+        {
+            nSumPercent += nColPercents[i];
+        }
+        for(int i = 0; i < COL_COUNT; ++i)
+        {
+            nColWidths[i] = (nAvailWidth * nColPercents[i]) / nSumPercent;
+            nUsedWidth += nColWidths[i];
+        }
+        if(nUsedWidth < nAvailWidth)
+        {
+            nColWidths[COL_COUNT - 1] += (nAvailWidth - nUsedWidth);
+        }
+    }
+    else
+    {
+        dwError = GetColumnWidths(COL_COUNT, nColPercents, nColWidths);
+        BAIL_ON_CLI_ERROR(dwError);
+    }
 
     {
         const char *ppszHeader[COL_COUNT] = {
@@ -807,9 +840,22 @@ PrintAction(
             "Download"
         };
 
-        tdnf_print_border(nColWidths, COL_COUNT);
-        tdnf_print_row(ppszHeader, nColWidths, COL_COUNT);
-        tdnf_print_border(nColWidths, COL_COUNT);
+        if(bCompact)
+        {
+            pr_info("%-*s %-*s %-*s %-*s %-*s %-*s\n",
+                    nColWidths[0], ppszHeader[0],
+                    nColWidths[1], ppszHeader[1],
+                    nColWidths[2], ppszHeader[2],
+                    nColWidths[3], ppszHeader[3],
+                    nColWidths[4], ppszHeader[4],
+                    nColWidths[5], ppszHeader[5]);
+        }
+        else
+        {
+            tdnf_print_border(nColWidths, COL_COUNT);
+            tdnf_print_row(ppszHeader, nColWidths, COL_COUNT);
+            tdnf_print_border(nColWidths, COL_COUNT);
+        }
     }
     
     for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
@@ -857,10 +903,26 @@ PrintAction(
         ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
 
-        tdnf_print_row((const char *const *)ppszInfoToPrint, nColWidths, COL_COUNT);
+        if(bCompact)
+        {
+            pr_info("%-*s %-*s %-*s %-*s %-*s %-*s\n",
+                    nColWidths[0], ppszInfoToPrint[0],
+                    nColWidths[1], ppszInfoToPrint[1],
+                    nColWidths[2], ppszInfoToPrint[2],
+                    nColWidths[3], ppszInfoToPrint[3],
+                    nColWidths[4], ppszInfoToPrint[4],
+                    nColWidths[5], ppszInfoToPrint[5]);
+        }
+        else
+        {
+            tdnf_print_row((const char *const *)ppszInfoToPrint, nColWidths, COL_COUNT);
+        }
     }
 
-    tdnf_print_border(nColWidths, COL_COUNT);
+    if(!bCompact)
+    {
+        tdnf_print_border(nColWidths, COL_COUNT);
+    }
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
