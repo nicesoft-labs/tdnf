@@ -28,3 +28,13 @@ target_link_libraries(${TDNF_HISTORY_UTIL_BIN}
     ${RPM_LIBRARIES}
     ${SQLITE3_LIBRARIES}
 )
+
+add_executable(flag_set_test
+    tests/flag_set_test.c
+)
+
+target_link_libraries(flag_set_test
+    ${LIB_TDNF_HISTORY}
+    ${RPM_LIBRARIES}
+    ${SQLITE3_LIBRARIES}
+)
