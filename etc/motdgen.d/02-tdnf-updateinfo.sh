@@ -10,9 +10,13 @@
 
 path="/var/cache/tdnf/cached-updateinfo.txt"
 
+tdnf -q --refresh updateinfo | grep -vE '^Refreshing|^Disabling' > "${path}"
+
 if [ -s "${path}" ]; then
-    grep -qE 'Security|Bugfix|Enhancement' "${path}" || exit 0
-    echo; cat "${path}"; echo "Run 'tdnf updateinfo info' to see the details."
+  grep -qE 'Security|Bugfix|Enhancement' "${path}" || exit 0
+  echo
+  cat "${path}"
+  echo "Run 'tdnf updateinfo info' to see the details."
 else
-    echo "tdnf update info not available yet!"
+  echo "tdnf update info not available yet!"
 fi

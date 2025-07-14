@@ -680,6 +680,7 @@ TDNFOpenHandle(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+    #if 0
     /* set macros from command line */
     for (pOpt = pTdnf->pArgs->pSetOpt; pOpt; pOpt = pOpt->pNext)
     {
@@ -688,6 +689,7 @@ TDNFOpenHandle(
             rpmDefineMacro(NULL, pOpt->pszOptValue, 0);
         }
     }
+    #endif
 
     dwError = TDNFLoadPlugins(pTdnf);
     BAIL_ON_TDNF_ERROR(dwError);

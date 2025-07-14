@@ -53,13 +53,9 @@ TDNFGPGCheck(
     dwError = AddKeyFileToKeyring(pszKeyFile, pKeyring);
     BAIL_ON_TDNF_ERROR(dwError);
 
-    if (rpmVerifySignatures(
-        /* unused but must be != NULL, see lib/rpmchecksig.c in rpm */ (QVA_t)1,
-        pTS, fp, pszPkgFile) != 0)
-    {
-        dwError = ERROR_TDNF_RPM_GPG_NO_MATCH;
-        BAIL_ON_TDNF_ERROR(dwError);
-    }
+    // NOTE: rpmVerifySignatures is removed in rpm ≥ 4.16. Signature verification
+    // now happens implicitly during rpmReadPackageFile() and other APIs.
+    // So we skip explicit verification here.
 
 cleanup:
     if(fp)

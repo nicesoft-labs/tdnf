@@ -29,9 +29,7 @@ def setup_test(utils):
 
 
 def teardown_test(utils):
-    if (os.path.isdir(RPMBUILD_DIR)):
-        shutil.rmtree(RPMBUILD_DIR)
-
+    pass
 
 def get_pkg_file_path(utils, pkgname):
     dir = os.path.join(utils.config['repo_path'], 'photon-test', 'RPMS', ARCH)
