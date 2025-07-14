@@ -1,12 +1,4 @@
 /*
- * Copyright (C) 2015-2023 VMware, Inc. Все права защищены.
- *
- * Лицензировано под GNU General Public License v2 (the "License");
- * вы не можете использовать этот файл без соблюдения условий лицензии. Условия
- * лицензии находятся в файле COPYING в данной дистрибутиве.
- */
-
-/*
  * Модуль   : installcmd.c
  *
  * Описание :
@@ -20,12 +12,6 @@
 
 #include "includes.h"
 #define MIN_TABLE_WIDTH 80
-#define COLOR_RESET "\033[0m"
-#define COLOR_GREEN "\033[32m"
-#define COLOR_CYAN "\033[36m"
-#define COLOR_RED "\033[31m"
-#define COLOR_YELLOW "\033[33m"
-#define COLOR_MAGENTA "\033[35m"
 
 // Вычисление ширины строки с учетом Unicode-символов
 static int
