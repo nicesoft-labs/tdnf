@@ -800,23 +800,20 @@ PrintAction(
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
 
         pr_info("\342\224\202");
-        pr_info(" %-*s \342\224\202 %-*s \342\224\202 %-*s \342\224\202 %-*s \342\224\202 %*s \342\224\202 %*s \342\224\202\n",
-                nColWidths[0], ppszInfoToPrint[0],
-                nColWidths[1], ppszInfoToPrint[1],
-                nColWidths[2], ppszInfoToPrint[2],
-                nColWidths[3], ppszInfoToPrint[3],
-                nColWidths[4], ppszInfoToPrint[4],
-                nColWidths[5], ppszInfoToPrint[5]);
-    }
-
-    pr_info("\342\224\224");
-    for(int i = 0; i < COL_COUNT; ++i)
-    {
-        for(int j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
-        if(i == COL_COUNT - 1)
-            pr_info("\342\224\230\n");
-        else
-            pr_info("\342\224\252");
+        pr_info(
+            "%-*s %-*s %-*s %-*s %-*s %*s\n",
+            nColWidths[0],
+            ppszInfoToPrint[0],
+            nColWidths[1],
+            ppszInfoToPrint[1],
+            nColWidths[2],
+            ppszInfoToPrint[2],
+            nColWidths[3],
+            ppszInfoToPrint[3],
+            nColWidths[4],
+            ppszInfoToPrint[4],
+            nColWidths[5],
+            ppszInfoToPrint[5]);
     }
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
