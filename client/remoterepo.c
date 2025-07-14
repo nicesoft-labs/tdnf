@@ -18,6 +18,8 @@ progress_cb(
     )
 {
     uint32_t dPercent;
+    double speed = 0.0;
+    double eta = 0.0;
     pcb_data *pData = (pcb_data *)pUserData;
 
     UNUSED(ulNow);
@@ -38,6 +40,20 @@ progress_cb(
         }
         pData->prev_time = pData->cur_time;
         dPercent = (uint32_t)(((double)dlNow / (double)dlTotal) * 100.0);
+
+        if (pData->last_time &&
+            difftime(pData->cur_time, pData->last_time) > 0.0)
+        {
+            speed = (double)(dlNow - pData->last_bytes) /
+                    difftime(pData->cur_time, pData->last_time);
+            if (speed > 0.0)
+            {
+                eta = (double)(dlTotal - dlNow) / speed;
+            }
+        }
+
+        pData->last_time = pData->cur_time;
+        pData->last_bytes = dlNow;
     }
     else
     {
@@ -47,11 +63,21 @@ progress_cb(
 
     if (!isatty(STDOUT_FILENO))
     {
-        pr_info("%s %u%% %ld\n", pData->pszData, dPercent, dlNow);
+        pr_info("%s %u%% %ld %ld %ld\n",
+                pData->pszData,
+                dPercent,
+                dlNow,
+                (long)speed,
+                (long)eta);
     }
     else
     {
-        pr_info("%-35s %10ld %u%%\r", pData->pszData, dlNow, dPercent);
+        pr_info("%-35s %10ld %u%% %ld %ld\r",
+                pData->pszData,
+                dlNow,
+                dPercent,
+                (long)speed,
+                (long)eta);
     }
 
     fflush(stdout);
@@ -78,6 +104,8 @@ set_progress_cb(
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
     memset(&pData, 0, sizeof(pcb_data));
+    pData.last_bytes = 0;
+    pData.last_time = 0;
     strncpy(pData.pszData, pszData, sizeof(pData.pszData) - 1);
     /* coverity[bad_sizeof] */
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, &pData);
