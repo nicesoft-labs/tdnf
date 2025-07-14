@@ -11,6 +11,7 @@ progress_cb(
 {
     uint32_t dPercent;
     double speed = 0.0;
+    double cur_speed = 0.0;
     double eta = 0.0;
     pcb_data *pData = (pcb_data *)pUserData;
 
@@ -36,8 +37,17 @@ progress_cb(
         if (pData->last_time &&
             difftime(pData->cur_time, pData->last_time) > 0.0)
         {
-            speed = (double)(dlNow - pData->last_bytes) /
-                    difftime(pData->cur_time, pData->last_time);
+            cur_speed = (double)(dlNow - pData->last_bytes) /
+                        difftime(pData->cur_time, pData->last_time);
+            if (pData->ema_speed == 0.0)
+            {
+                pData->ema_speed = cur_speed;
+            }
+            else
+            {
+                pData->ema_speed = 0.7 * pData->ema_speed + 0.3 * cur_speed;
+            }
+            speed = pData->ema_speed;
             if (speed > 0.0)
             {
                 eta = (double)(dlTotal - dlNow) / speed;
