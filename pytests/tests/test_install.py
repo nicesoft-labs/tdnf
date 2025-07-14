@@ -55,8 +55,10 @@ def test_install_package_without_version_suffix(utils):
 def test_install_package_verbose(utils):
     pkgname = utils.config["mulversion_pkgname"]
     utils.erase_package(pkgname)
-    utils.run(['tdnf', 'install', '-y', '-v', '--nogpgcheck', pkgname])
+    ret = utils.run(['tdnf', 'install', '-y', '-v', '--nogpgcheck', pkgname])
     assert utils.check_package(pkgname)
+    progress = [l for l in ret['stdout'] if l.startswith('install ') and '%' in l]
+    assert progress
 
 
 def test_dummy_requires(utils):
