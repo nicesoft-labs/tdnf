@@ -29,5 +29,7 @@
 #include "defines.h"
 #include "structs.h"
 #include "prototypes.h"
+#include "i18n.h"
+
 
 #endif /* __COMMON_INCLUDES_H__ */
