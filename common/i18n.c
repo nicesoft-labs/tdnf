@@ -78,6 +78,45 @@ TDNFTrim(const char *str)
     return str;
 }
 
+
+static void
+TDNFUnescape(char *str)
+{
+    char *src = str;
+    char *dst = str;
+
+    while (*src)
+    {
+        if (*src == '\\' && src[1])
+        {
+            switch (src[1])
+            {
+                case 'n':
+                    *dst++ = '\n';
+                    src += 2;
+                    continue;
+                case 't':
+                    *dst++ = '\t';
+                    src += 2;
+                    continue;
+                case '\\':
+                    *dst++ = '\\';
+                    src += 2;
+                    continue;
+                default:
+                    *dst++ = *src++;
+                    break;
+            }
+        }
+        else
+        {
+            *dst++ = *src++;
+        }
+    }
+    *dst = '\0';
+}
+
+
 uint32_t
 TDNFLoadTranslations(const char *lang)
 {
@@ -122,6 +161,7 @@ TDNFLoadTranslations(const char *lang)
             {
                 trans[len - 1] = 0;
             }
+            TDNFUnescape(trans);
         }
         TDNFAddTranslation(orig, trans);
     }
