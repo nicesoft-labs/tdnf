@@ -78,6 +78,7 @@ typedef enum
 #define TDNF_CONF_KEY_PROXY_USER          "proxy_username"
 #define TDNF_CONF_KEY_PROXY_PASS          "proxy_password"
 #define TDNF_CONF_KEY_KEEP_CACHE          "keepcache"
+#define TDNF_CONF_KEY_COLOR               "color"
 #define TDNF_CONF_KEY_DISTROVERPKG        "distroverpkg"
 #define TDNF_CONF_KEY_DISTROARCHPKG       "distroarchpkg"
 #define TDNF_CONF_KEY_MAX_STRING_LEN      "maxstringlen"
