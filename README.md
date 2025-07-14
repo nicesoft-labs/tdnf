@@ -56,6 +56,9 @@ place and has the format:
 When stdout is not a terminal the same fields are printed one per line
 without carriage returns.
 
+The progress bar is shown in green when output goes to a terminal. Use
+`--nocolor` or set `color=0` in `tdnf.conf` to disable colors.
+
 ## Testing
 
 To build and run the test scripts within a container, do:
