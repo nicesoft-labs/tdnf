@@ -254,6 +254,7 @@ typedef struct _TDNF_CONF
     int nInstallOnlyLimit;
     int nCleanRequirementsOnRemove;
     int nKeepCache;
+    int nColor;            //colored progress output
     int nOpenMax;          //set max number of open files
     int nCheckUpdateCompat;
     int nDistroSyncReinstallChanged;
