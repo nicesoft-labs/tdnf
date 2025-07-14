@@ -810,7 +810,7 @@ PrintAction(
         tdnf_print_border(nColWidths, COL_COUNT);
         tdnf_print_row(ppszHeader, nColWidths, COL_COUNT);
         tdnf_print_border(nColWidths, COL_COUNT);
-
+    }
     
     for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
     {
