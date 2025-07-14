@@ -1,169 +1,155 @@
-/*
- * Copyright (C) 2015-2022 VMware, Inc. All Rights Reserved.
- *
- * Licensed under the GNU General Public License v2 (the "License");
- * you may not use this file except in compliance with the License. The terms
- * of the License are located in the COPYING file of this distribution.
- */
-
 #include "includes.h"
 
+// Сообщение с описанием использования команды tdnf
 static const char *help_msg =
- "Usage: tdnf [options] COMMAND\n\n"
- "common options:\n"
- "           [--assumeno]\n"
- "           [-y, --assumeyes]\n"
- "           [-C, --cacheonly]\n"
- "           [-c [config file]]\n"
- "           [--debugsolver]\n"
- "           [--disableexcludes]\n"
- "           [--disableplugin=<plugin_name>]\n"
- "           [--disablerepo=<repoid>]\n"
- "           [--downloaddir=<directory>]\n"
- "           [--downloadonly]\n"
- "           [--enablerepo=<repoid>]\n"
- "           [--enableplugin=<plugin_name>]\n"
- "           [--exclude [file1,file2,...]]\n"
- "           [--installroot [path]]\n"
- "           [--noautoremove]\n"
- "           [--nogpgcheck]\n"
- "           [--noplugins]\n"
- "           [-q, --quiet]\n"
- "           [--reboot-required]\n"
- "           [--refresh]\n"
- "           [--releasever RELEASEVER]\n"
- "           [--repo=<repoid>]\n"
- "           [--repofrompath=<repoid>,<path>]\n"
- "           [--repoid=<repoid>]\n"
- "           [--rpmverbosity [debug level name]]\n"
- "           [--security]\n"
- "           [--sec-severity CVSS_v3.0_Severity]\n"
- "           [--setopt SETOPTS]\n"
- "           [--skip-broken]\n"
- "           [--skipconflicts]\n"
- "           [--skipdigest]\n"
- "           [--skipsignature]\n"
- "           [--skipobsoletes]\n"
- "           [--testonly]\n"
- "           [--version]\n\n"
- "repoquery select options:\n"
- "           [--available]\n"
- "           [--duplicates]\n"
- "           [--extras]\n"
- "           [--file <file>]\n"
- "           [--installed]\n"
- "           [--whatdepends <capability1>[,<capability2>[..]]]\n"
- "           [--whatrequires <capability1>[,<capability2>[..]]]\n"
- "           [--whatenhances <capability1>[,<capability2>[..]]]\n"
- "           [--whatobsoletes <capability1>[,<capability2>[..]]]\n"
- "           [--whatprovides <capability1>[,<capability2>[..]]]\n"
- "           [--whatrecommends <capability1>[,<capability2>[..]]]\n"
- "           [--whatrequires <capability1>[,<capability2>[..]]]\n"
- "           [--whatsuggests <capability1>[,<capability2>[..]]]\n"
- "           [--whatsupplements <capability1>[,<capability2>[..]]]\n\n"
- "repoquery query options:\n"
- "           [--depends]\n"
- "           [--enhances]\n"
- "           [--list]\n"
- "           [--obsoletes]\n"
- "           [--provides]\n"
- "           [--recommends]\n"
- "           [--requires]\n"
- "           [--requires-pre]\n"
- "           [--suggests]\n"
- "           [--source]\n"
- "           [--supplements]\n\n"
- "reposync options:\n"
- "           [--arch=<arch> [--arch=<arch> [..]]\n"
- "           [--delete]\n"
- "           [--download-path=<directory>]\n"
- "           [--download-metadata]\n"
- "           [--gpgcheck]\n"
- "           [--metadata-path=<directory>]\n"
- "           [--newest-only]\n"
- "           [--norepopath]\n"
- "           [--source]\n"
- "           [--urls]\n\n"
- "List of Main Commands\n\n"
- "autoerase          same as 'autoremove'\n"
- "autoremove         Remove a package and its automatic dependencies or all auto installed packages\n"
- "check              Checks repositories for problems\n"
- "check-local        Checks local rpm folder for problems\n"
- "check-update       Check for available package upgrades\n"
- "clean              Remove cached data\n"
- "distro-sync        Synchronize installed packages to the latest available versions\n"
- "downgrade          Downgrade a package\n"
- "erase              Remove a package or packages from your system\n"
- "help               Display a helpful usage message\n"
- "history            History Commands\n"
- "info               Display details about a package or group of packages\n"
- "install            Install a package or packages on your system\n"
- "list               List a package or groups of packages\n"
- "makecache          Generate the metadata cache\n"
- "mark               Mark package(s)\n"
- "provides           same as 'whatprovides'\n"
- "whatprovides       Find what package provides the given value\n"
- "reinstall          Reinstall a package\n"
- "remove             Remove a package or packages from your system\n"
- "repolist           Display the configured software repositories\n"
- "repoquery          Query repositories\n"
- "reposync           Download all packages from one or more repositories to a directory\n"
- "search             Search package details for the given string\n"
- "update             Upgrade a package or packages on your system (same as 'upgrade')\n"
- "update-to          same as 'upgrade-to'\n"
- "updateinfo         Display advisories about packages\n"
- "upgrade            Upgrade a package or packages on your system\n"
- "upgrade-to         Upgrade a package on your system to the specified version\n"
- "\n"
- "Please refer to https://github.com/vmware/tdnf/wiki for documentation.";
+    "📖 Использование: tdnf [опции] КОМАНДА\n\n"
+    "🛠️ Общие опции:\n"
+    "   [--assumeno]                      🚫 Предполагать 'нет' для всех запросов\n"
+    "   [-y, --assumeyes]                 ✅ Предполагать 'да' для всех запросов\n"
+    "   [-C, --cacheonly]                 📂 Работать только с кэшем\n"
+    "   [-c [файл_конфигурации]]          ⚙️ Указать файл конфигурации\n"
+    "   [--debugsolver]                   🐞 Включить отладку решателя\n"
+    "   [--disableexcludes]               🔓 Отключить исключения\n"
+    "   [--disableplugin=<имя_плагина>]   🔌 Отключить указанный плагин\n"
+    "   [--disablerepo=<id_репозитория>]  🚫 Отключить указанный репозиторий\n"
+    "   [--downloaddir=<папка>]           📥 Указать папку для загрузки\n"
+    "   [--downloadonly]                  ⬇️ Только загрузить, без установки\n"
+    "   [--enablerepo=<id_репозитория>]   ✅ Включить указанный репозиторий\n"
+    "   [--enableplugin=<имя_плагина>]    🔌 Включить указанный плагин\n"
+    "   [--exclude [файл1,файл2,...]]     🚫 Исключить указанные файлы\n"
+    "   [--installroot [путь]]            📍 Указать корневую папку установки\n"
+    "   [--noautoremove]                  🔄 Отключить автоудаление зависимостей\n"
+    "   [--nogpgcheck]                    🔐 Отключить проверку GPG\n"
+    "   [--noplugins]                     🚫 Отключить все плагины\n"
+    "   [-q, --quiet]                     🤫 Тихий режим (без вывода)\n"
+    "   [--reboot-required]               🔄 Показать пакеты, требующие перезагрузки\n"
+    "   [--refresh]                       🔄 Обновить метаданные репозиториев\n"
+    "   [--releasever ВЕРСИЯ]             📌 Указать версию релиза\n"
+    "   [--repo=<id_репозитория>]         📦 Указать репозиторий\n"
+    "   [--repofrompath=<id>,<путь>]      📍 Добавить репозиторий из пути\n"
+    "   [--repoid=<id_репозитория>]       📦 Указать ID репозитория\n"
+    "   [--rpmverbosity [уровень_отладки]] 🛠️ Уровень детализации RPM\n"
+    "   [--security]                      🔒 Показать только обновления безопасности\n"
+    "   [--sec-severity CVSS_v3.0_Severity] 🚨 Указать уровень критичности CVSS\n"
+    "   [--setopt ОПЦИИ]                  ⚙️ Установить параметры конфигурации\n"
+    "   [--skip-broken]                   🚫 Пропускать поврежденные пакеты\n"
+    "   [--skipconflicts]                 🚫 Пропускать конфликты пакетов\n"
+    "   [--skipdigest]                    🚫 Пропускать проверку хэша\n"
+    "   [--skipsignature]                 🚫 Пропускать проверку подписи\n"
+    "   [--skipobsoletes]                 🚫 Пропускать устаревшие пакеты\n"
+    "   [--testonly]                      🧪 Только тестировать, без изменений\n"
+    "   [--version]                       ℹ️ Показать версию tdnf\n\n"
+    "🔍 Опции для repoquery (выборка):\n"
+    "   [--available]                     📦 Показать доступные пакеты\n"
+    "   [--duplicates]                    🔄 Показать дублирующиеся пакеты\n"
+    "   [--extras]                        📦 Показать дополнительные пакеты\n"
+    "   [--file <файл>]                   📄 Показать пакеты, связанные с файлом\n"
+    "   [--installed]                     ✅ Показать установленные пакеты\n"
+    "   [--whatdepends <возможность>]     🔗 Показать зависимости пакетов\n"
+    "   [--whatrequires <возможность>]    🔗 Показать, что требуется для пакетов\n"
+    "   [--whatenhances <возможность>]    📈 Показать, что улучшает пакеты\n"
+    "   [--whatobsoletes <возможность>]   🗑️ Показать, что устаревает\n"
+    "   [--whatprovides <возможность>]    📦 Показать, что предоставляет\n"
+    "   [--whatrecommends <возможность>]  💡 Показать рекомендации\n"
+    "   [--whatsuggests <возможность>]    💡 Показать предложения\n"
+    "   [--whatsupplements <возможность>] 📦 Показать дополнения\n\n"
+    "🔎 Опции для repoquery (запросы):\n"
+    "   [--depends]                       🔗 Показать зависимости\n"
+    "   [--enhances]                      📈 Показать улучшения\n"
+    "   [--list]                          📋 Показать список\n"
+    "   [--obsoletes]                     🗑️ Показать устаревшие пакеты\n"
+    "   [--provides]                      📦 Показать предоставляемые возможности\n"
+    "   [--recommends]                    💡 Показать рекомендации\n"
+    "   [--requires]                      🔗 Показать требования\n"
+    "   [--requires-pre]                  🔗 Показать предварительные требования\n"
+    "   [--suggests]                      💡 Показать предложения\n"
+    "   [--source]                        📜 Показать исходные пакеты\n"
+    "   [--supplements]                   📦 Показать дополнения\n\n"
+    "📥 Опции для reposync:\n"
+    "   [--arch=<архитектура>]            🖥️ Указать архитектуру\n"
+    "   [--delete]                        🗑️ Удалить старые пакеты\n"
+    "   [--download-path=<папка>]         📥 Указать папку для загрузки\n"
+    "   [--download-metadata]             📋 Загрузить метаданные\n"
+    "   [--gpgcheck]                      🔐 Включить проверку GPG\n"
+    "   [--metadata-path=<папка>]         📋 Указать папку для метаданных\n"
+    "   [--newest-only]                   ⏫ Загружать только последние версии\n"
+    "   [--norepopath]                    🚫 Игнорировать путь репозитория\n"
+    "   [--source]                        📜 Загружать исходные пакеты\n"
+    "   [--urls]                          🔗 Показать URL пакетов\n\n"
+    "📋 Основные команды:\n\n"
+    "autoerase          🗑️ То же, что 'autoremove'\n"
+    "autoremove         🗑️ Удалить пакет и его автоматические зависимости\n"
+    "check              🔍 Проверить репозитории на ошибки\n"
+    "check-local        🔍 Проверить локальную папку с RPM\n"
+    "check-update       🔄 Проверить наличие обновлений\n"
+    "clean              🧹 Очистить кэш\n"
+    "distro-sync        🔄 Синхронизировать пакеты с последними версиями\n"
+    "downgrade          ⬇️ Понизить версию пакета\n"
+    "erase              🗑️ Удалить пакет(ы) из системы\n"
+    "help               ℹ️ Показать справку\n"
+    "history            📜 Показать историю операций\n"
+    "info               ℹ️ Показать информацию о пакете(ах)\n"
+    "install            📦 Установить пакет(ы)\n"
+    "list               📋 Показать список пакетов\n"
+    "makecache          📂 Создать кэш метаданных\n"
+    "mark               🏷️ Пометить пакет(ы)\n"
+    "provides           🔍 То же, что 'whatprovides'\n"
+    "whatprovides       🔍 Найти, какой пакет предоставляет значение\n"
+    "reinstall          🔄 Переустановить пакет\n"
+    "remove             🗑️ Удалить пакет(ы) из системы\n"
+    "repolist           📋 Показать настроенные репозитории\n"
+    "repoquery          🔍 Запросить информацию о репозиториях\n"
+    "reposync           📥 Скачать все пакеты из репозитория в папку\n"
+    "search             🔎 Поиск пакетов по строке\n"
+    "update             ⬆️ Обновить пакет(ы) (то же, что 'upgrade')\n"
+    "update-to          ⬆️ То же, что 'upgrade-to'\n"
+    "updateinfo         ℹ️ Показать уведомления о пакетах\n"
+    "upgrade            ⬆️ Обновить пакет(ы)\n"
+    "upgrade-to         ⬆️ Обновить пакет до указанной версии\n"
+    "\n"
+    "📚 Подробная документация: https://niceos.ru\n";
 
+// Показать сообщение об ошибке при отсутствии команды
 void
-TDNFCliShowUsage(
-    void
-    )
+TDNFCliShowUsage(void)
 {
-    pr_crit("You need to give some command\n");
+    pr_crit("❌ Укажите команду для выполнения!\n");
     TDNFCliShowHelp();
 }
 
+// Показать справку
 void
-TDNFCliShowHelp(
-    void
-    )
+TDNFCliShowHelp(void)
 {
     pr_crit("%s\n", help_msg);
 }
 
+// Показать сообщение о неверной команде
 void
-TDNFCliShowNoSuchCommand(
-    const char *pszCmd
-    )
+TDNFCliShowNoSuchCommand(const char *pszCmd)
 {
-    pr_crit("No such command: %s. Please use /usr/bin/tdnf --help\n",
+    pr_crit("🚫 Команда '%s' не найдена. Используйте /usr/bin/tdnf --help для справки.\n",
             pszCmd ? pszCmd : "");
 }
 
+// Показать сообщение о неверной опции
 void
-TDNFCliShowNoSuchOption(
-    const char *pszOption
-    )
+TDNFCliShowNoSuchOption(const char *pszOption)
 {
-    pr_crit("No such option: %s. Please use /usr/bin/tdnf --help\n",
+    pr_crit("🚫 Опция '%s' не найдена. Используйте /usr/bin/tdnf --help для справки.\n",
             pszOption ? pszOption : "");
 }
 
+// Обработчик команды help
 uint32_t
-TDNFCliHelpCommand(
-    PTDNF_CLI_CONTEXT pContext,
-    PTDNF_CMD_ARGS pCmdArgs
-    )
+TDNFCliHelpCommand(PTDNF_CLI_CONTEXT pContext, PTDNF_CMD_ARGS pCmdArgs)
 {
     if (!pCmdArgs || !pContext)
     {
+        pr_crit("❌ Ошибка: Неверные параметры функции!\n");
         return ERROR_TDNF_INVALID_PARAMETER;
     }
 
     TDNFCliShowHelp();
-
     return 0;
 }
