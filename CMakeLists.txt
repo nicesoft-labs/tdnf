@@ -76,6 +76,7 @@ find_package(CURL REQUIRED)
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tdnf")
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pytests/tests/" DESTINATION "${CMAKE_INSTALL_DATADIR}/tdnf/pytests/tests")
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pytests/repo/" DESTINATION "${CMAKE_INSTALL_DATADIR}/tdnf/pytests/repo")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/locale/" DESTINATION "${CMAKE_INSTALL_DATADIR}/tdnf/locale")
 
 set(LIB_TDNF "tdnf")
 set(LIB_TDNF_SOLV "tdnfsolv")
