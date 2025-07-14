@@ -145,9 +145,6 @@ retry:
             return p->pszTrans;
         }
     }
-    return msg;
-}
-
     if (!bTrimmed && pszMsg && *pszMsg)
     {
         size_t len = strlen(pszMsg);
@@ -160,7 +157,8 @@ retry:
             goto retry;
         }
     }
-
+    return msg;
+}
 
 void
 TDNFFreeTranslations(void)
