@@ -133,17 +133,34 @@ TDNFLoadTranslations(const char *lang)
 const char*
 TDNFTranslate(const char *msg)
 {
-    TDNF_TRANSLATION *p = gpTranslations;
-    while (p)
+    const char *pszMsg = msg;
+    char szBuf[256];
+    int bTrimmed = 0;
+
+retry:
+    for (TDNF_TRANSLATION *p = gpTranslations; p; p = p->pNext)
     {
-        if (strcmp(p->pszOrig, msg) == 0)
+        if (strcmp(p->pszOrig, pszMsg) == 0)
         {
             return p->pszTrans;
         }
-        p = p->pNext;
     }
     return msg;
 }
+
+    if (!bTrimmed && pszMsg && *pszMsg)
+    {
+        size_t len = strlen(pszMsg);
+        if (len > 0 && pszMsg[len - 1] == '\n' && len < sizeof(szBuf))
+        {
+            memcpy(szBuf, pszMsg, len - 1);
+            szBuf[len - 1] = '\0';
+            pszMsg = szBuf;
+            bTrimmed = 1;
+            goto retry;
+        }
+    }
+
 
 void
 TDNFFreeTranslations(void)
