@@ -21,6 +21,63 @@
 
 #include "includes.h"
 
+static int
+tdnf_display_width(const char *psz)
+{
+    int width = 0;
+    mbstate_t state;
+    memset(&state, 0, sizeof(state));
+    const char *p = psz;
+    wchar_t wc;
+
+    while (p && *p)
+    {
+        if (*p == '\033')
+        {
+            p++;
+            while (*p && *p != 'm')
+            {
+                p++;
+            }
+            if (*p == 'm')
+            {
+                p++;
+            }
+            continue;
+        }
+
+        size_t n = mbrtowc(&wc, p, MB_CUR_MAX, &state);
+        if (n == (size_t)-1 || n == (size_t)-2)
+        {
+            memset(&state, 0, sizeof(state));
+            p++;
+            width++;
+            continue;
+        }
+        p += n;
+        int w = wcwidth(wc);
+        if (w < 0)
+        {
+            w = 0;
+        }
+        width += w;
+    }
+
+    return width;
+}
+
+static void
+tdnf_print_padded(const char *psz, int nWidth)
+{
+    int w = tdnf_display_width(psz);
+    pr_info("%s", psz);
+    for (int i = w; i < nWidth; ++i)
+    {
+        pr_info(" ");
+    }
+}
+
+
 uint32_t
 TDNFCliInstallCommand(
     PTDNF_CLI_CONTEXT pContext,
@@ -722,34 +779,33 @@ PrintAction(
             "Download"
         };
 
-        pr_info("\342\224\214");
+        pr_info("+");
         for(i = 0; i < COL_COUNT; ++i)
         {
-            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
+            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("-");
             if(i == COL_COUNT - 1)
-                pr_info("\342\224\220\n");
+                pr_info("+\n");
             else
-                pr_info("\342\224\254");
+                pr_info("+");
         }
 
-        pr_info("\342\224\202");
+        pr_info("|");
         for(i = 0; i < COL_COUNT; ++i)
         {
-            pr_info(" %-*s ", nColWidths[i], ppszHeader[i]);
-            if(i == COL_COUNT - 1)
-                pr_info("\342\224\202\n");
-            else
-                pr_info("\342\224\202");
+            pr_info(" ");
+            tdnf_print_padded(ppszHeader[i], nColWidths[i]);
+            pr_info(" |");
         }
+        pr_info("\n");
 
         pr_info("\342\224\234");
         for(i = 0; i < COL_COUNT; ++i)
         {
-            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("\342\224\200");
+            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("-");
             if(i == COL_COUNT - 1)
-                pr_info("\342\224\244\n");
+                pr_info("+\n");
             else
-                pr_info("\342\224\262");
+                pr_info("+");
         }
     }
 
@@ -799,21 +855,22 @@ PrintAction(
         ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
 
-        pr_info(
-            "%-*s %-*s %-*s %-*s %-*s %*s\n",
-            nColWidths[0],
-            ppszInfoToPrint[0],
-            nColWidths[1],
-            ppszInfoToPrint[1],
-            nColWidths[2],
-            ppszInfoToPrint[2],
-            nColWidths[3],
-            ppszInfoToPrint[3],
-            nColWidths[4],
-            ppszInfoToPrint[4],
-            nColWidths[5],
-            ppszInfoToPrint[5]);
+        pr_info("|");
+        tdnf_print_padded(ppszInfoToPrint[0], nColWidths[0]);
+        pr_info(" | ");
+        tdnf_print_padded(ppszInfoToPrint[1], nColWidths[1]);
+        pr_info(" | ");
+        tdnf_print_padded(ppszInfoToPrint[2], nColWidths[2]);
+        pr_info(" | ");
+        tdnf_print_padded(ppszInfoToPrint[3], nColWidths[3]);
+        pr_info(" | ");
+        tdnf_print_padded(ppszInfoToPrint[4], nColWidths[4]);
+        pr_info(" | ");
+        tdnf_print_padded(ppszInfoToPrint[5], nColWidths[5]);
+        pr_info(" |\n");
     }
+
+    pr_info("+");
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
