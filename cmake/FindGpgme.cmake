@@ -10,7 +10,7 @@ find_library(GPGME_LIBRARY NAMES gpgme)
 
 # handle the QUIETLY and REQUIRED arguments and set GPGME_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(gpgme DEFAULT_MSG
+find_package_handle_standard_args(Gpgme DEFAULT_MSG
                                   GPGME_LIBRARY GPGME_INCLUDE_DIR)
 
 mark_as_advanced(GPGME_INCLUDE_DIR GPGME_LIBRARY )
