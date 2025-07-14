@@ -13,6 +13,7 @@
 #include <tdnf.h>
 #include <tdnfcli.h>
 #include <tdnf-common-defines.h>
+#include <curl/curl.h>
 
 #include "../common/defines.h"
 #include "../common/structs.h"
