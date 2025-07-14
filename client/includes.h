@@ -63,4 +63,13 @@
 
 #include "config.h"
 
+/* Progress output colors */
+#ifndef TDNF_COLOR_GREEN
+#define TDNF_COLOR_GREEN COLOR_GREEN
+#endif
+
+#ifndef TDNF_COLOR_RESET
+#define TDNF_COLOR_RESET COLOR_RESET
+#endif
+
 #endif /* __CLIENT_INCLUDES_H__ */
