@@ -243,9 +243,12 @@ TDNFCliParseArgs(
                                   argv[optind-1],
                                   optarg,
                                   pstOptions);
-                    BAIL_ON_CLI_ERROR(dwError);
-                //TODO: Handle unknown option, incomplete options
-                break;
+                    if (dwError)
+                    {
+                        dwError = ERROR_TDNF_INVALID_PARAMETER;
+                        BAIL_ON_CLI_ERROR(dwError);
+                    }
+                    break;
             }
     }
 
