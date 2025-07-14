@@ -300,6 +300,16 @@ GlobalGetDnfCheckUpdateCompat(
     );
 
 void
+GlobalSetColor(
+    int32_t val
+    );
+
+bool
+GlobalGetColor(
+    void
+    );
+
+void
 log_console(
     int32_t loglevel,
     const char *format,
