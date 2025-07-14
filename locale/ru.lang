@@ -4,4 +4,5 @@ Running transaction=Выполнение транзакции\n
 Installed=При установке
 Version=Версия
 Name=Название
-Installing/Updating=Установка/Обновление
+Installing/Updating: =Установка/Обновление: 
+Removing: =Удаление: 
