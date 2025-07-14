@@ -77,6 +77,36 @@ tdnf_print_padded(const char *psz, int nWidth)
     }
 }
 
+static void
+tdnf_print_border(const int *pnColWidths, int nCols)
+{
+    int i = 0, j = 0;
+    pr_info("+");
+    for (i = 0; i < nCols; ++i)
+    {
+        for (j = 0; j < pnColWidths[i] + 2; ++j)
+        {
+            pr_info("-");
+        }
+        pr_info("+");
+    }
+    pr_info("\n");
+}
+
+static void
+tdnf_print_row(const char *const *ppszCols, const int *pnColWidths, int nCols)
+{
+    int i = 0;
+    pr_info("|");
+    for (i = 0; i < nCols; ++i)
+    {
+        pr_info(" ");
+        tdnf_print_padded(ppszCols[i] ? ppszCols[i] : "", pnColWidths[i]);
+        pr_info(" |");
+    }
+    pr_info("\n");
+}
+
 
 uint32_t
 TDNFCliInstallCommand(
@@ -767,9 +797,7 @@ PrintAction(
     dwError = GetColumnWidths(COL_COUNT, nColPercents, nColWidths);
     BAIL_ON_CLI_ERROR(dwError);
 
-    // Table header
     {
-        int i = 0, j = 0;
         const char *ppszHeader[COL_COUNT] = {
             "Name",
             "Arch",
@@ -779,35 +807,9 @@ PrintAction(
             "Download"
         };
 
-        pr_info("+");
-        for(i = 0; i < COL_COUNT; ++i)
-        {
-            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("-");
-            if(i == COL_COUNT - 1)
-                pr_info("+\n");
-            else
-                pr_info("+");
-        }
-
-        pr_info("|");
-        for(i = 0; i < COL_COUNT; ++i)
-        {
-            pr_info(" ");
-            tdnf_print_padded(ppszHeader[i], nColWidths[i]);
-            pr_info(" |");
-        }
-        pr_info("\n");
-
-        pr_info("\342\224\234");
-        for(i = 0; i < COL_COUNT; ++i)
-        {
-            for(j = 0; j < nColWidths[i] + 2; ++j) pr_info("-");
-            if(i == COL_COUNT - 1)
-                pr_info("+\n");
-            else
-                pr_info("+");
-        }
-    }
+        tdnf_print_border(nColWidths, COL_COUNT);
+        tdnf_print_row(ppszHeader, nColWidths, COL_COUNT);
+        tdnf_print_border(nColWidths, COL_COUNT);
 
     
     for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
@@ -855,22 +857,10 @@ PrintAction(
         ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
                                  pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
 
-        pr_info("|");
-        tdnf_print_padded(ppszInfoToPrint[0], nColWidths[0]);
-        pr_info(" | ");
-        tdnf_print_padded(ppszInfoToPrint[1], nColWidths[1]);
-        pr_info(" | ");
-        tdnf_print_padded(ppszInfoToPrint[2], nColWidths[2]);
-        pr_info(" | ");
-        tdnf_print_padded(ppszInfoToPrint[3], nColWidths[3]);
-        pr_info(" | ");
-        tdnf_print_padded(ppszInfoToPrint[4], nColWidths[4]);
-        pr_info(" | ");
-        tdnf_print_padded(ppszInfoToPrint[5], nColWidths[5]);
-        pr_info(" |\n");
+        tdnf_print_row((const char *const *)ppszInfoToPrint, nColWidths, COL_COUNT);
     }
 
-    pr_info("+");
+    tdnf_print_border(nColWidths, COL_COUNT);
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
