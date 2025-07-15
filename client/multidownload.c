@@ -12,6 +12,7 @@ curl_off_t g_md_bytes_total = 0;
 curl_off_t g_md_bytes_done = 0;
 int g_md_pkgs_total = 0;
 int g_md_pkgs_done = 0;
+int g_md_pkgs_cached = 0;
 
 static int
 md_alloc_row(void)
@@ -171,21 +172,47 @@ progress_cb(
             gbar[barw] = '\0';
             if (GlobalGetColor())
             {
-                pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% (%d/%d packages)",
-                        "",
-                        gbar,
-                        pct,
-                        g_md_pkgs_done,
-                        g_md_pkgs_total);
+                if(g_md_pkgs_cached > 0)
+                {
+                    pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% (%d/%d packages) (%d cached)",
+                            "",
+                            gbar,
+                            pct,
+                            g_md_pkgs_done,
+                            g_md_pkgs_total,
+                            g_md_pkgs_cached);
+                }
+                else
+                {
+                    pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% (%d/%d packages)",
+                            "",
+                            gbar,
+                            pct,
+                            g_md_pkgs_done,
+                            g_md_pkgs_total);
+                }
             }
             else
             {
-                pr_info("%-20s [%s] %3u%% (%d/%d packages)",
-                        "",
-                        gbar,
-                        pct,
-                        g_md_pkgs_done,
-                        g_md_pkgs_total);
+                if(g_md_pkgs_cached > 0)
+                {
+                    pr_info("%-20s [%s] %3u%% (%d/%d packages) (%d cached)",
+                            "",
+                            gbar,
+                            pct,
+                            g_md_pkgs_done,
+                            g_md_pkgs_total,
+                            g_md_pkgs_cached);
+                }
+                else
+                {
+                    pr_info("%-20s [%s] %3u%% (%d/%d packages)",
+                            "",
+                            gbar,
+                            pct,
+                            g_md_pkgs_done,
+                            g_md_pkgs_total);
+                }
             }
             printf("\033[K");
             printf("\033[%dB", top);
@@ -412,5 +439,6 @@ TDNFMultiPerform(void)
     g_md_bytes_done = 0;
     g_md_pkgs_total = 0;
     g_md_pkgs_done = 0;
+    g_md_pkgs_cached = 0;
     return 0;
 }
