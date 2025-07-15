@@ -174,6 +174,12 @@ TDNFUtilsFormatSize(
     char** ppszFormattedSize
     );
 
+uint32_t
+TDNFUtilsFormatSpeed(
+    double dSpeedBytes,
+    char **ppszFormattedSpeed
+    );
+
 void
 TDNFFreePackageInfoContents(
     PTDNF_PKG_INFO pPkgInfo
