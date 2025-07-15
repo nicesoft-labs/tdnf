@@ -172,18 +172,16 @@ TDNFPreDownloadPkgs(
         }
     }
 
+    g_md_bytes_total = qwTotalBytes;
+    g_md_bytes_done = 0;
+    g_md_pkgs_total = nTotal;
+    g_md_pkgs_cached = 0;
+    g_md_pkgs_done = 0;
+	
     if(nTotal <= 1 || nNeed <= 1 || pTdnf->pConf->nMaxParallelDownloads <= 1)
     {
         return 0;
     }
-
-    g_md_bytes_total = qwTotalBytes;
-    g_md_bytes_done = 0;
-    g_md_pkgs_total = nNeed;
-    g_md_pkgs_done = 0;
-    g_md_pkgs_total = nTotal;
-    g_md_pkgs_cached = nTotal - nNeed;
-    g_md_pkgs_done = g_md_pkgs_cached;
 	
     dwError = TDNFMultiBegin(pTdnf->pConf->nMaxParallelDownloads);
     BAIL_ON_TDNF_ERROR(dwError);
@@ -212,6 +210,8 @@ TDNFPreDownloadPkgs(
 
         if(!pInfo->pszLocation || pInfo->pszLocation[0] == '/')
         {
+            g_md_pkgs_cached++;
+            g_md_pkgs_done++;
             continue;
         }
 
@@ -248,6 +248,9 @@ TDNFPreDownloadPkgs(
             }
             if(nInPlace)
             {
+                g_md_pkgs_cached++;
+                g_md_pkgs_done++;
+                g_md_bytes_total -= pInfo->dwDownloadSizeBytes;
                 continue;
             }
 
@@ -302,6 +305,9 @@ TDNFPreDownloadPkgs(
                 TDNF_SAFE_FREE_MEMORY(pszCacheDir);
                 TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
                 TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+                g_md_pkgs_cached++;
+                g_md_pkgs_done++;
+                g_md_bytes_total -= pInfo->dwDownloadSizeBytes;
                 continue;
             }
         }
@@ -323,6 +329,9 @@ TDNFPreDownloadPkgs(
                 pInfo->pszLocalPath = pszNormPath;
                 pszNormPath = NULL;
                 TDNF_SAFE_FREE_MEMORY(pszRemotePath);
+                g_md_pkgs_cached++;
+                g_md_pkgs_done++;
+                g_md_bytes_total -= pInfo->dwDownloadSizeBytes;
                 continue;
             }
         }
