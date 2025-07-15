@@ -50,8 +50,11 @@ estimated time remaining.  In a terminal the output is updated in
 place and has the format:
 
 ```
-<label> <bytes> <percent> <speed B/s> <eta s>
+<label> <bytes> <percent> <speed> <eta s>
 ```
+
+The <speed> field is automatically scaled and shown in kb/s, Mb/s or Gb/s
+depending on the transfer rate.
 
 When stdout is not a terminal the same fields are printed one per line
 without carriage returns.
