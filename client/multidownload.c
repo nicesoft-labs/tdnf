@@ -161,7 +161,7 @@ progress_cb(
         if(g_md_pkgs_total > 0)
         {
             int top = g_md_prog.nRows - 1;
-            printf("\033[%dA", top);
+            printf("\033[%dA\r", top);
             uint32_t pct = (g_md_bytes_total > 0) ?
                 (uint32_t)(((double)g_md_bytes_done / (double)g_md_bytes_total) * 100.0) : 0;
             char gbar[barw + 1];
@@ -259,14 +259,16 @@ TDNFMultiBegin(long nMax)
         return ERROR_TDNF_CURL_INIT;
     g_nMax = nMax > 0 ? nMax : 1;
     g_md_prog.is_tty = isatty(STDOUT_FILENO);
-    g_md_prog.nRows = g_nMax;
-    g_md_prog.nRows = g_nMax + 1; /* extra row for overall progress */
+    g_md_prog.nRows = g_nMax + 3; /* overall progress + spacer + pkg rows */
     if(g_md_prog.is_tty)
     {
         g_md_prog.rows = calloc(g_md_prog.nRows, sizeof(int));
-        /* reserve first row for overall progress */
-        if(g_md_prog.rows)
+        /* reserve first row for overall progress and spacer line */
+        if(g_md_prog.rows) {
             g_md_prog.rows[0] = 1;
+            if(g_md_prog.nRows > 1)
+                g_md_prog.rows[1] = 1;
+        }
         for(int i = 0; i < g_md_prog.nRows; ++i)
             printf("\n");
         fflush(stdout);
