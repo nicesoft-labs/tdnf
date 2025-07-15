@@ -375,12 +375,16 @@ TDNFFreeUpdateInfoReferences(
     PTDNF_UPDATEINFO_REF pRef
     )
 {
-    if(pRef)
+    PTDNF_UPDATEINFO_REF pTmp = NULL;
+    while(pRef)
     {
         TDNF_SAFE_FREE_MEMORY(pRef->pszID);
         TDNF_SAFE_FREE_MEMORY(pRef->pszLink);
         TDNF_SAFE_FREE_MEMORY(pRef->pszTitle);
         TDNF_SAFE_FREE_MEMORY(pRef->pszType);
+        pTmp = pRef;
+        pRef = pRef->pNext;
+        TDNF_SAFE_FREE_MEMORY(pTmp);
     }
 }
 
