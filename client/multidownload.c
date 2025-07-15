@@ -51,6 +51,7 @@ progress_cb(
     double speed = 0.0;
     double cur_speed = 0.0;
     double eta = 0.0;
+    char *pszSpeed = NULL;
     const int barw = 50;
     pcb_data *pData = (pcb_data *)pUserData;
 
@@ -112,12 +113,17 @@ progress_cb(
 
     if (!g_md_prog.is_tty)
     {
-        pr_info("%s %u%% %ld %ld %ld\n",
+        if (TDNFUtilsFormatSpeed(speed, &pszSpeed) != 0)
+        {
+            pszSpeed = NULL;
+        }
+        pr_info("%s %u%% %ld %s %ld\n",
                 pData->pszData,
                 dPercent,
                 dlNow,
-                (long)speed,
+                pszSpeed ? pszSpeed : "0 b/s",
                 (long)eta);
+        TDNF_SAFE_FREE_MEMORY(pszSpeed);
     }
     else
     {
@@ -134,24 +140,30 @@ progress_cb(
         
         printf("\r");
 
+        if (TDNFUtilsFormatSpeed(speed, &pszSpeed) != 0)
+        {
+            pszSpeed = NULL;
+        }
+        
         if (GlobalGetColor())
         {
-            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %ld %ld",
+            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %s %ld",
                     pData->pszData,
                     bar,
                     dPercent,
-                    (long)speed,
+                    pszSpeed ? pszSpeed : "0 b/s",
                     (long)eta);
         }
         else
         {
-            pr_info("%-20s [%s] %3u%% %ld %ld",
+            pr_info("%-20s [%s] %3u%% %s %ld",
                     pData->pszData,
                     bar,
                     dPercent,
-                    (long)speed,
+                    pszSpeed ? pszSpeed : "0 b/s",
                     (long)eta);
         }
+        TDNF_SAFE_FREE_MEMORY(pszSpeed);
         printf("\033[K");
         if(up > 0)
             printf("\033[%dB", up);
