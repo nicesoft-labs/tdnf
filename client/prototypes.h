@@ -893,6 +893,13 @@ TDNFGetUpdateInfoPackages(
     PTDNF_UPDATEINFO_PKG* ppUpdateInfoPkg
     );
 
+uint32_t
+TDNFGetUpdateInfoReferences(
+    PSolvSack pSack,
+    Id dwAdvId,
+    PTDNF_UPDATEINFO_REF* ppRefList
+    );
+
 void
 TDNFFreeUpdateInfoReferences(
     PTDNF_UPDATEINFO_REF pRef
