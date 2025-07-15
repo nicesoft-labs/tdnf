@@ -245,6 +245,7 @@ TDNFMultiPerform(void)
                 {
                     if(msg->data.result == CURLE_OK)
                         rename(h->pszTmp, h->pszDest);
+                    curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
                 }
             }
