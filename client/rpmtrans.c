@@ -223,7 +223,13 @@ TDNFPreDownloadPkgs(
                     if(access(pszFilePath, F_OK) == 0)
                     {
                         pInfo->pszLocalPath = pszFilePath;
-                        // pszFilePath = NULL;
+                        /*
+                         * pszFilePath now belongs to pInfo->pszLocalPath and
+                         * will be freed when the package info is cleaned up.
+                         * Avoid freeing it below by resetting the local
+                         * variable to NULL.
+                         */
+                        pszFilePath = NULL;
                         nInPlace = 1;
                         break;
                     }
