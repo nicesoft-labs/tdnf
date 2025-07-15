@@ -287,6 +287,7 @@ TDNFPreDownloadPkgs(
             if(access(pszNormPath, F_OK) == 0)
             {
                 pInfo->pszLocalPath = pszNormPath;
+                pszNormPath = NULL;
                 TDNF_SAFE_FREE_MEMORY(pszDir);
                 TDNF_SAFE_FREE_MEMORY(pszCacheDir);
                 TDNF_SAFE_FREE_MEMORY(pszNormCacheDir);
@@ -310,6 +311,7 @@ TDNFPreDownloadPkgs(
             if(access(pszNormPath, F_OK) == 0)
             {
                 pInfo->pszLocalPath = pszNormPath;
+                pszNormPath = NULL;
                 TDNF_SAFE_FREE_MEMORY(pszRemotePath);
                 continue;
             }
