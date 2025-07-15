@@ -181,6 +181,9 @@ TDNFPreDownloadPkgs(
     g_md_bytes_done = 0;
     g_md_pkgs_total = nNeed;
     g_md_pkgs_done = 0;
+    g_md_pkgs_total = nTotal;
+    g_md_pkgs_cached = nTotal - nNeed;
+    g_md_pkgs_done = g_md_pkgs_cached;
 	
     dwError = TDNFMultiBegin(pTdnf->pConf->nMaxParallelDownloads);
     BAIL_ON_TDNF_ERROR(dwError);
