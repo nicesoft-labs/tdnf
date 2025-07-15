@@ -373,9 +373,14 @@ TDNFPreDownloadPkgs(
             pszProgress = pInfo->pszName;
         }
 
-        dwError = TDNFMultiAdd(pCurl, fp, pszTmp, pszNormPath, &pInfo->pszLocalPath, pszProgress);
+        dwError = TDNFMultiAdd(pCurl, fp, pszTmp, pszNormPath,
+                               &pInfo->pszLocalPath, pszProgress);
         BAIL_ON_TDNF_ERROR(dwError);
-
+	    
+        /* ownership of pCurl/fp transferred to multi downloader */
+        pCurl = NULL;
+        fp = NULL;
+	    
         TDNF_SAFE_FREE_MEMORY(pszUserPass);
         TDNF_SAFE_FREE_MEMORY(pszUrl);
         TDNF_SAFE_FREE_MEMORY(pszTmp);
