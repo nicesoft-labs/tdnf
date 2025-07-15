@@ -48,6 +48,7 @@ typedef struct progress_cb_data {
     time_t last_time;
     double ema_speed;
     char pszData[64];
+    int row;
 } pcb_data;
 
 typedef struct _TDNF_RPM_TS_
