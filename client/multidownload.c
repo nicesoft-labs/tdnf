@@ -115,9 +115,10 @@ progress_cb(
         memset(bar + filled, ' ', barw - filled);
         bar[barw] = '\0';
         int up = g_md_prog.nRows - 1 - pData->row;
-        if(up > 0)
+        if(up > 0) {
             printf("\033[%dA", up);
             printf("\r");
+        }
        
         if (GlobalGetColor())
         {
