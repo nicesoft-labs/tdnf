@@ -50,6 +50,7 @@ progress_cb(
     double speed = 0.0;
     double cur_speed = 0.0;
     double eta = 0.0;
+    const int barw = 50;
     pcb_data *pData = (pcb_data *)pUserData;
 
     UNUSED(ulNow);
@@ -121,7 +122,6 @@ progress_cb(
     {
         if(pData->row < 0)
             pData->row = md_alloc_row();
-        const int barw = 50;
         char bar[barw + 1];
         int filled = (dPercent * barw) / 100;
         memset(bar, '#', filled);
