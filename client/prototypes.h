@@ -260,6 +260,7 @@ extern curl_off_t g_md_bytes_total;
 extern curl_off_t g_md_bytes_done;
 extern int g_md_pkgs_total;
 extern int g_md_pkgs_done;
+extern int g_md_pkgs_cached;
 
 //packageutils.c
 uint32_t
