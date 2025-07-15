@@ -130,7 +130,7 @@ progress_cb(
         }
         else
         {
-            pr_info("%-20s [%s] %3u%% %ld %ld",
+            pr_info("%-20s [%s] %3u%% %ld %ld\r",
                     pData->pszData,
                     bar,
                     dPercent,
