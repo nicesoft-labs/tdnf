@@ -148,6 +148,7 @@ TDNFPreDownloadPkgs(
     PTDNF_PKG_INFO pInfo = NULL;
     int nNeed = 0;
     int nTotal = 0;
+    curl_off_t qwTotalBytes = 0;
     PTDNF_REPO_DATA pRepo = NULL;
     char *pszRemotePath = NULL;
     char *pszCacheDir = NULL;
@@ -167,6 +168,7 @@ TDNFPreDownloadPkgs(
         if(pInfo->pszLocation && pInfo->pszLocation[0] != '/')
         {
             nNeed++;
+            qwTotalBytes += pInfo->dwDownloadSizeBytes;
         }
     }
 
@@ -175,6 +177,11 @@ TDNFPreDownloadPkgs(
         return 0;
     }
 
+    g_md_bytes_total = qwTotalBytes;
+    g_md_bytes_done = 0;
+    g_md_pkgs_total = nNeed;
+    g_md_pkgs_done = 0;
+	
     dwError = TDNFMultiBegin(pTdnf->pConf->nMaxParallelDownloads);
     BAIL_ON_TDNF_ERROR(dwError);
 
