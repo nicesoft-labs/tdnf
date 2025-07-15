@@ -223,6 +223,7 @@ TDNFPreDownloadPkgs(
                     if(access(pszFilePath, F_OK) == 0)
                     {
                         pInfo->pszLocalPath = pszFilePath;
+                        pszFilePath = NULL;
                         nInPlace = 1;
                         break;
                     }
