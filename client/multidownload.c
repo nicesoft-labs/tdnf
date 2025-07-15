@@ -168,6 +168,12 @@ TDNFMultiBegin(long nMax)
         return ERROR_TDNF_CURL_INIT;
     g_nMax = nMax > 0 ? nMax : 1;
     curl_multi_setopt(g_pMulti, CURLMOPT_MAX_TOTAL_CONNECTIONS, g_nMax);
+#ifdef CURLMOPT_MAX_HOST_CONNECTIONS
+    curl_multi_setopt(g_pMulti, CURLMOPT_MAX_HOST_CONNECTIONS, g_nMax);
+#endif
+#ifdef CURLPIPE_MULTIPLEX
+    curl_multi_setopt(g_pMulti, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+#endif
     return 0;
 }
 
