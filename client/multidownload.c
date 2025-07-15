@@ -390,8 +390,10 @@ TDNFMultiPerform(void)
                 curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &h);
                 if(h)
                 {
-                    if(msg->data.result == CURLE_OK)
+                    if(msg->data.result == CURLE_OK) {
                         rename(h->pszTmp, h->pszDest);
+                        g_md_pkgs_cached++;
+                    }
                     if(g_md_prog.is_tty && h->cb.row >= 0)
                     {
                         int up = g_md_prog.nRows - 1 - h->cb.row;
@@ -419,8 +421,10 @@ TDNFMultiPerform(void)
             curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &h);
             if(h)
             {
-                if(msg->data.result == CURLE_OK)
+                if(msg->data.result == CURLE_OK) {
                     rename(h->pszTmp, h->pszDest);
+                    g_md_pkgs_cached++;
+                }
                 if(g_md_prog.is_tty && h->cb.row >= 0)
                 {
                     int up = g_md_prog.nRows - 1 - h->cb.row;
