@@ -8,6 +8,11 @@ typedef struct _MD_PROGRESS {
 
 static MD_PROGRESS g_md_prog = {0};
 
+curl_off_t g_md_bytes_total = 0;
+curl_off_t g_md_bytes_done = 0;
+int g_md_pkgs_total = 0;
+int g_md_pkgs_done = 0;
+
 static int
 md_alloc_row(void)
 {
@@ -87,12 +92,20 @@ progress_cb(
         }
 
         pData->last_time = pData->cur_time;
+        if(pData->pBytesDone)
+        {
+            *pData->pBytesDone += (dlNow - pData->last_bytes);
+        }
         pData->last_bytes = dlNow;
     }
     else
     {
         pData->prev_time = 0;
         dPercent = 100;
+        if(pData->pBytesDone)
+        {
+            *pData->pBytesDone += (dlTotal - pData->last_bytes);
+        }
     }
 
     if (!g_md_prog.is_tty)
@@ -143,6 +156,41 @@ progress_cb(
             printf("\033[%dB", up);
     }
 
+
+        /* overall progress bar at row 0 */
+        if(g_md_pkgs_total > 0)
+        {
+            int top = g_md_prog.nRows - 1;
+            printf("\033[%dA", top);
+            uint32_t pct = (g_md_bytes_total > 0) ?
+                (uint32_t)(((double)g_md_bytes_done / (double)g_md_bytes_total) * 100.0) : 0;
+            char gbar[barw + 1];
+            int gfilled = (pct * barw) / 100;
+            memset(gbar, '#', gfilled);
+            memset(gbar + gfilled, ' ', barw - gfilled);
+            gbar[barw] = '\0';
+            if (GlobalGetColor())
+            {
+                pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% (%d/%d packages)",
+                        "",
+                        gbar,
+                        pct,
+                        g_md_pkgs_done,
+                        g_md_pkgs_total);
+            }
+            else
+            {
+                pr_info("%-20s [%s] %3u%% (%d/%d packages)",
+                        "",
+                        gbar,
+                        pct,
+                        g_md_pkgs_done,
+                        g_md_pkgs_total);
+            }
+            printf("\033[K");
+            printf("\033[%dB", top);
+        }
+    
     fflush(stdout);
 
     return 0;
@@ -212,9 +260,13 @@ TDNFMultiBegin(long nMax)
     g_nMax = nMax > 0 ? nMax : 1;
     g_md_prog.is_tty = isatty(STDOUT_FILENO);
     g_md_prog.nRows = g_nMax;
+    g_md_prog.nRows = g_nMax + 1; /* extra row for overall progress */
     if(g_md_prog.is_tty)
     {
         g_md_prog.rows = calloc(g_md_prog.nRows, sizeof(int));
+        /* reserve first row for overall progress */
+        if(g_md_prog.rows)
+            g_md_prog.rows[0] = 1;
         for(int i = 0; i < g_md_prog.nRows; ++i)
             printf("\n");
         fflush(stdout);
@@ -255,6 +307,8 @@ TDNFMultiAdd(CURL *pCurl, FILE *fp, const char *pszTmp, const char *pszDest,
     if(ppszFilePath) *ppszFilePath = strdup(pszDest);
 
     h->cb.row = -1;
+    h->cb.pBytesTotal = &g_md_bytes_total;
+    h->cb.pBytesDone = &g_md_bytes_done;
     if(pszProgress)
         strncpy(h->cb.pszData, pszProgress, sizeof(h->cb.pszData)-1);
 
@@ -308,6 +362,7 @@ TDNFMultiPerform(void)
                         fflush(stdout);
                         md_release_row(h->cb.row);
                     }
+                    g_md_pkgs_done++;
                     curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
                 }
@@ -336,6 +391,7 @@ TDNFMultiPerform(void)
                     fflush(stdout);
                     md_release_row(h->cb.row);
                 }
+                g_md_pkgs_done++;
                 curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                 free_handle(h);
             }
@@ -350,5 +406,9 @@ TDNFMultiPerform(void)
     }
     g_md_prog.nRows = 0;
     g_md_prog.is_tty = false;
+    g_md_bytes_total = 0;
+    g_md_bytes_done = 0;
+    g_md_pkgs_total = 0;
+    g_md_pkgs_done = 0;
     return 0;
 }
