@@ -7,6 +7,9 @@
       <rights>Copyright 2007 Company Inc</rights>
       <issued date="2007-12-28 16:42:30"/>
       <updated date="2008-03-14 12:00:00"/>
+      <references>
+        <reference href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0002" id="CVE-2017-0002" title="CVE-2017-0002" type="cve"/>
+      </references>
       <description>This update includes a fix for a denial-of-service issue.</description>
       <pkglist>
         <collection short="1">
