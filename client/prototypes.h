@@ -256,6 +256,11 @@ TDNFMultiAdd(CURL *pCurl, FILE *fp, const char *pszTmp, const char *pszDest,
 uint32_t
 TDNFMultiPerform(void);
 
+extern curl_off_t g_md_bytes_total;
+extern curl_off_t g_md_bytes_done;
+extern int g_md_pkgs_total;
+extern int g_md_pkgs_done;
+
 //packageutils.c
 uint32_t
 TDNFMatchForReinstall(
