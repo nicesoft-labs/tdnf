@@ -1,5 +1,37 @@
 #include "includes.h"
 
+typedef struct _MD_PROGRESS {
+    int *rows;
+    long nRows;
+    bool is_tty;
+} MD_PROGRESS;
+
+static MD_PROGRESS g_md_prog = {0};
+
+static int
+md_alloc_row(void)
+{
+    for(int i = 0; i < g_md_prog.nRows; ++i)
+    {
+        if(!g_md_prog.rows[i])
+        {
+            g_md_prog.rows[i] = 1;
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void
+md_release_row(int row)
+{
+    if(row >= 0 && row < g_md_prog.nRows)
+    {
+        g_md_prog.rows[row] = 0;
+    }
+}
+
+
 static int
 progress_cb(
     void *pUserData,
@@ -63,7 +95,7 @@ progress_cb(
         dPercent = 100;
     }
 
-    if (!isatty(STDOUT_FILENO))
+    if (!g_md_prog.is_tty)
     {
         pr_info("%s %u%% %ld %ld %ld\n",
                 pData->pszData,
@@ -74,16 +106,21 @@ progress_cb(
     }
     else
     {
+        if(pData->row < 0)
+            pData->row = md_alloc_row();
         const int barw = 50;
         char bar[barw + 1];
         int filled = (dPercent * barw) / 100;
         memset(bar, '#', filled);
         memset(bar + filled, ' ', barw - filled);
         bar[barw] = '\0';
-
+        int up = g_md_prog.nRows - 1 - pData->row;
+        if(up > 0)
+            printf("\033[%dA", up);
+        
         if (GlobalGetColor())
         {
-            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %ld %ld\r",
+            pr_info("%-20s " TDNF_COLOR_GREEN "[%s]" TDNF_COLOR_RESET " %3u%% %ld %ld",
                     pData->pszData,
                     bar,
                     dPercent,
@@ -99,6 +136,9 @@ progress_cb(
                     (long)speed,
                     (long)eta);
         }
+        printf("\033[K");
+        if(up > 0)
+            printf("\033[%dB", up);
     }
 
     fflush(stdout);
@@ -127,6 +167,7 @@ md_set_progress_cb(
         dwError = ENOMEM;
         BAIL_ON_TDNF_SYSTEM_ERROR_UNCOND(dwError);
     }
+    pData->row = -1;
 
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, progress_cb);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
@@ -167,6 +208,15 @@ TDNFMultiBegin(long nMax)
     if(!g_pMulti)
         return ERROR_TDNF_CURL_INIT;
     g_nMax = nMax > 0 ? nMax : 1;
+    g_md_prog.is_tty = isatty(STDOUT_FILENO);
+    g_md_prog.nRows = g_nMax;
+    if(g_md_prog.is_tty)
+    {
+        g_md_prog.rows = calloc(g_md_prog.nRows, sizeof(int));
+        for(int i = 0; i < g_md_prog.nRows; ++i)
+            printf("\n");
+        fflush(stdout);
+    }
     curl_multi_setopt(g_pMulti, CURLMOPT_MAX_TOTAL_CONNECTIONS, g_nMax);
 #ifdef CURLMOPT_MAX_HOST_CONNECTIONS
     curl_multi_setopt(g_pMulti, CURLMOPT_MAX_HOST_CONNECTIONS, g_nMax);
@@ -202,7 +252,7 @@ TDNFMultiAdd(CURL *pCurl, FILE *fp, const char *pszTmp, const char *pszDest,
     h->ppszFilePath = ppszFilePath;
     if(ppszFilePath) *ppszFilePath = strdup(pszDest);
 
-    memset(&h->cb,0,sizeof(h->cb));
+    h->cb.row = -1;
     if(pszProgress)
         strncpy(h->cb.pszData, pszProgress, sizeof(h->cb.pszData)-1);
 
@@ -245,6 +295,17 @@ TDNFMultiPerform(void)
                 {
                     if(msg->data.result == CURLE_OK)
                         rename(h->pszTmp, h->pszDest);
+                    if(g_md_prog.is_tty && h->cb.row >= 0)
+                    {
+                        int up = g_md_prog.nRows - 1 - h->cb.row;
+                        if(up > 0)
+                            printf("\033[%dA", up);
+                        printf("\033[2K");
+                        if(up > 0)
+                            printf("\033[%dB", up);
+                        fflush(stdout);
+                        md_release_row(h->cb.row);
+                    }
                     curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
                 }
@@ -262,6 +323,17 @@ TDNFMultiPerform(void)
             {
                 if(msg->data.result == CURLE_OK)
                     rename(h->pszTmp, h->pszDest);
+                if(g_md_prog.is_tty && h->cb.row >= 0)
+                {
+                    int up = g_md_prog.nRows - 1 - h->cb.row;
+                    if(up > 0)
+                        printf("\033[%dA", up);
+                    printf("\033[2K");
+                    if(up > 0)
+                        printf("\033[%dB", up);
+                    fflush(stdout);
+                    md_release_row(h->cb.row);
+                }
                 curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                 free_handle(h);
             }
@@ -269,5 +341,12 @@ TDNFMultiPerform(void)
     }
     curl_multi_cleanup(g_pMulti);
     g_pMulti = NULL;
+    if(g_md_prog.rows)
+    {
+        free(g_md_prog.rows);
+        g_md_prog.rows = NULL;
+    }
+    g_md_prog.nRows = 0;
+    g_md_prog.is_tty = false;
     return 0;
 }
