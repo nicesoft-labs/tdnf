@@ -267,6 +267,99 @@ error:
 }
 
 uint32_t
+TDNFGetUpdateInfoReferences(
+    PSolvSack pSack,
+    Id dwAdvId,
+    PTDNF_UPDATEINFO_REF* ppRefList
+    )
+{
+    uint32_t dwError = 0;
+    Dataiterator di = {0};
+    PTDNF_UPDATEINFO_REF pRefs = NULL;
+    PTDNF_UPDATEINFO_REF pRef = NULL;
+    const char* pszTemp = NULL;
+
+    if(!pSack || !pSack->pPool || !ppRefList)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    dataiterator_init(&di, pSack->pPool, 0, dwAdvId, UPDATE_REFERENCE, 0, 0);
+    while (dataiterator_step(&di))
+    {
+        dataiterator_setpos(&di);
+
+        pszTemp = pool_lookup_str(pSack->pPool,
+                                  SOLVID_POS,
+                                  UPDATE_REFERENCE_TYPE);
+        if(!pszTemp || strcmp(pszTemp, "cve"))
+            continue;
+
+        dwError = TDNFAllocateMemory(1,
+                                     sizeof(TDNF_UPDATEINFO_REF),
+                                     (void**)&pRef);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        dwError = TDNFAllocateString(pszTemp, &pRef->pszType);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        pszTemp = pool_lookup_str(pSack->pPool,
+                                  SOLVID_POS,
+                                  UPDATE_REFERENCE_ID);
+        if(pszTemp)
+        {
+            dwError = TDNFAllocateString(pszTemp, &pRef->pszID);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        pszTemp = pool_lookup_str(pSack->pPool,
+                                  SOLVID_POS,
+                                  UPDATE_REFERENCE_HREF);
+        if(pszTemp)
+        {
+            dwError = TDNFAllocateString(pszTemp, &pRef->pszLink);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        pszTemp = pool_lookup_str(pSack->pPool,
+                                  SOLVID_POS,
+                                  UPDATE_REFERENCE_TITLE);
+        if(pszTemp)
+        {
+            dwError = TDNFAllocateString(pszTemp, &pRef->pszTitle);
+            BAIL_ON_TDNF_ERROR(dwError);
+        }
+
+        pRef->pNext = pRefs;
+        pRefs = pRef;
+        pRef = NULL;
+    }
+
+    *ppRefList = pRefs;
+
+cleanup:
+    dataiterator_free(&di);
+    return dwError;
+
+error:
+    if(ppRefList)
+    {
+        *ppRefList = NULL;
+    }
+    if(pRef)
+    {
+        TDNFFreeUpdateInfoReferences(pRef);
+    }
+    if(pRefs)
+    {
+        TDNFFreeUpdateInfoReferences(pRefs);
+    }
+    goto cleanup;
+}
+
+
+uint32_t
 TDNFPopulateUpdateInfoOfOneAdvisory(
     PSolvSack pSack,
     Id dwAdvId,
@@ -394,6 +487,9 @@ TDNFPopulateUpdateInfoOfOneAdvisory(
 
 
         dwError = TDNFGetUpdateInfoPackages(pSack, dwAdvId, &pInfo->pPackages);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        dwError = TDNFGetUpdateInfoReferences(pSack, dwAdvId, &pInfo->pReferences);
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
