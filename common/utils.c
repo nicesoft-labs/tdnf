@@ -202,6 +202,56 @@ error:
     goto cleanup;
 }
 
+uint32_t
+TDNFUtilsFormatSpeed(
+    double dSpeedBytes,
+    char **ppszFormattedSpeed
+    )
+{
+    uint32_t dwError = 0;
+    char *pszFormattedSpeed = NULL;
+    const char *pszUnits[] = {"бит/с", "кбит/с", "Мбит/с", "Гбит/с"};
+    int nIndex = 0;
+    int nLimit = ARRAY_SIZE(pszUnits) - 1;
+    double dSpeedBits = dSpeedBytes * 8.0;
+    double dKilo = 1000.0;
+    int nMaxSize = 35;
+
+    if(!ppszFormattedSpeed)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    while(nIndex < nLimit && dSpeedBits >= dKilo)
+    {
+        dSpeedBits /= dKilo;
+        nIndex++;
+    }
+
+    dwError = TDNFAllocateMemory(1, nMaxSize, (void**)&pszFormattedSpeed);
+    BAIL_ON_TDNF_ERROR(dwError);
+
+    if(snprintf(pszFormattedSpeed, nMaxSize, "%6.2f %s", dSpeedBits, pszUnits[nIndex]) >= nMaxSize)
+    {
+        dwError = ERROR_TDNF_OUT_OF_MEMORY;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    *ppszFormattedSpeed = pszFormattedSpeed;
+
+cleanup:
+    return dwError;
+
+error:
+    if(ppszFormattedSpeed)
+    {
+        *ppszFormattedSpeed = NULL;
+    }
+    TDNF_SAFE_FREE_MEMORY(pszFormattedSpeed);
+    goto cleanup;
+}
+
 void
 TDNFFreePackageInfo(
     PTDNF_PKG_INFO pPkgInfo
