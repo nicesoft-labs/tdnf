@@ -253,7 +253,13 @@ md_set_progress_cb(
     /* retain pBytesTotal/pBytesDone as they may be pre-set by the caller */
     curl_off_t *pBytesTotal = pData->pBytesTotal;
     curl_off_t *pBytesDone = pData->pBytesDone;
-    memset(pData, 0, sizeof(*pData));
+    /* reset all other fields without clobbering the counters */
+    pData->cur_time = 0;
+    pData->prev_time = 0;
+    pData->last_bytes = 0;
+    pData->last_time = 0;
+    pData->ema_speed = 0.0;
+    memset(pData->pszData, 0, sizeof(pData->pszData));
     pData->pBytesTotal = pBytesTotal;
     pData->pBytesDone = pBytesDone;
     pData->row = -1;
