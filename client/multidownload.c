@@ -251,12 +251,12 @@ md_set_progress_cb(
     }
 
     /* retain pBytesTotal/pBytesDone as they may be pre-set by the caller */
+    curl_off_t *pBytesTotal = pData->pBytesTotal;
+    curl_off_t *pBytesDone = pData->pBytesDone;
+    memset(pData, 0, sizeof(*pData));
+    pData->pBytesTotal = pBytesTotal;
+    pData->pBytesDone = pBytesDone;
     pData->row = -1;
-    pData->prev_time = 0;
-    pData->last_time = 0;
-    pData->last_bytes = 0;
-    pData->ema_speed = 0.0;
-    pData->cur_time = 0;
     strncpy(pData->pszData, pszData, sizeof(pData->pszData) - 1);
 
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, progress_cb);
