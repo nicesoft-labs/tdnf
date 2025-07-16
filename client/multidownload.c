@@ -295,6 +295,18 @@ static CURLM *g_pMulti = NULL;
 static DL_HANDLE *g_pHandles = NULL;
 static long g_nMax = 1;
 
+static void
+md_disable_callbacks(CURL *pCurl)
+{
+    if(!pCurl)
+        return;
+    curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_PROGRESSFUNCTION, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_PROGRESSDATA, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 1L);
+}
+
 uint32_t
 TDNFMultiBegin(long nMax)
 {
@@ -340,11 +352,7 @@ free_handle(DL_HANDLE *h)
          * prevents libcurl from invoking progress callbacks with memory that
          * has already been released.
          */
-        curl_easy_setopt(h->pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
-        curl_easy_setopt(h->pCurl, CURLOPT_XFERINFODATA, NULL);
-        curl_easy_setopt(h->pCurl, CURLOPT_PROGRESSFUNCTION, NULL);
-        curl_easy_setopt(h->pCurl, CURLOPT_PROGRESSDATA, NULL);
-        curl_easy_setopt(h->pCurl, CURLOPT_NOPROGRESS, 1L);
+        md_disable_callbacks(h->pCurl);
         curl_easy_cleanup(h->pCurl);
     }
 
@@ -439,11 +447,7 @@ TDNFMultiPerform(void)
                      * associated memory has been released when the package
                      * comes from cache.
                      */
-                    curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
-                    curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
-                    curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSFUNCTION, NULL);
-                    curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSDATA, NULL);
-                    curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
+                    md_disable_callbacks(msg->easy_handle);
                     curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
                 }
@@ -480,11 +484,7 @@ TDNFMultiPerform(void)
                  * libcurl accessing freed memory if it tries to report
                  * progress after completion.
                  */
-                curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
-                curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
-                curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSFUNCTION, NULL);
-                curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSDATA, NULL);
-                curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
+                md_disable_callbacks(msg->easy_handle);
                 curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                 free_handle(h);
             }
