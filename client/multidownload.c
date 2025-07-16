@@ -238,6 +238,7 @@ progress_cb(
 static uint32_t
 md_set_progress_cb(
     CURL *pCurl,
+    pcb_data *pData,
     const char *pszData
     )
 {
