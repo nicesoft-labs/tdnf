@@ -342,6 +342,7 @@ free_handle(DL_HANDLE *h)
          */
         curl_easy_setopt(h->pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
         curl_easy_setopt(h->pCurl, CURLOPT_XFERINFODATA, NULL);
+        curl_easy_setopt(h->pCurl, CURLOPT_NOPROGRESS, 1L);
         curl_easy_cleanup(h->pCurl);
     }
 
@@ -429,8 +430,16 @@ TDNFMultiPerform(void)
                         md_release_row(h->cb.row);
                     }
                     g_md_pkgs_done++;
+                    /*
+                     * Make sure libcurl stops invoking callbacks before we
+                     * remove and free the handle. Without this, libcurl may
+                     * attempt to call the progress callback after the
+                     * associated memory has been released when the package
+                     * comes from cache.
+                     */
                     curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
                     curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
+                    curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
                     curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
                 }
@@ -462,8 +471,14 @@ TDNFMultiPerform(void)
                     md_release_row(h->cb.row);
                 }
                 g_md_pkgs_done++;
+                /*
+                 * Disable callbacks before removing the handle to avoid
+                 * libcurl accessing freed memory if it tries to report
+                 * progress after completion.
+                 */
                 curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
                 curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
+                curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
                 curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                 free_handle(h);
             }
