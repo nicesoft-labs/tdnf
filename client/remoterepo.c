@@ -8,6 +8,19 @@
 
 #include "includes.h"
 
+static void
+disable_progress_cb(CURL *pCurl)
+{
+    if(!pCurl)
+        return;
+    curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_PROGRESSFUNCTION, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_PROGRESSDATA, NULL);
+    curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 1L);
+}
+
+
 static int
 progress_cb(
     void *pUserData,
@@ -370,6 +383,7 @@ cleanup:
     }
     if(pCurl)
     {
+        disable_progress_cb(pCurl);
         curl_easy_cleanup(pCurl);
     }
     return dwError;
