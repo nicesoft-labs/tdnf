@@ -330,11 +330,30 @@ TDNFMultiBegin(long nMax)
 static void
 free_handle(DL_HANDLE *h)
 {
-    if(!h) return;
-    if(h->fp) fclose(h->fp);
-    if(h->pCurl) curl_easy_cleanup(h->pCurl);
-    if(h->pszTmp) free(h->pszTmp);
-    if(h->pszDest) free(h->pszDest);
+    if(!h)
+        return;
+
+    if(h->pCurl)
+    {
+        /*
+         * Explicitly disable callbacks before cleaning up the handle. This
+         * prevents libcurl from invoking progress callbacks with memory that
+         * has already been released.
+         */
+        curl_easy_setopt(h->pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
+        curl_easy_setopt(h->pCurl, CURLOPT_XFERINFODATA, NULL);
+        curl_easy_cleanup(h->pCurl);
+    }
+
+    if(h->fp)
+        fclose(h->fp);
+
+    if(h->pszTmp)
+        free(h->pszTmp);
+
+    if(h->pszDest)
+        free(h->pszDest);
+
     free(h);
 }
 
