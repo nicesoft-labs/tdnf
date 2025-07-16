@@ -342,6 +342,8 @@ free_handle(DL_HANDLE *h)
          */
         curl_easy_setopt(h->pCurl, CURLOPT_XFERINFOFUNCTION, NULL);
         curl_easy_setopt(h->pCurl, CURLOPT_XFERINFODATA, NULL);
+        curl_easy_setopt(h->pCurl, CURLOPT_PROGRESSFUNCTION, NULL);
+        curl_easy_setopt(h->pCurl, CURLOPT_PROGRESSDATA, NULL);
         curl_easy_setopt(h->pCurl, CURLOPT_NOPROGRESS, 1L);
         curl_easy_cleanup(h->pCurl);
     }
@@ -439,6 +441,8 @@ TDNFMultiPerform(void)
                      */
                     curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
                     curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
+                    curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSFUNCTION, NULL);
+                    curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSDATA, NULL);
                     curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
                     curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                     free_handle(h);
@@ -478,6 +482,8 @@ TDNFMultiPerform(void)
                  */
                 curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFOFUNCTION, NULL);
                 curl_easy_setopt(msg->easy_handle, CURLOPT_XFERINFODATA, NULL);
+                curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSFUNCTION, NULL);
+                curl_easy_setopt(msg->easy_handle, CURLOPT_PROGRESSDATA, NULL);
                 curl_easy_setopt(msg->easy_handle, CURLOPT_NOPROGRESS, 1L);
                 curl_multi_remove_handle(g_pMulti, msg->easy_handle);
                 free_handle(h);
