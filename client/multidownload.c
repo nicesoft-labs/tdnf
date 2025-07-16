@@ -242,26 +242,20 @@ md_set_progress_cb(
     )
 {
     uint32_t dwError = 0;
-    pcb_data *pData = NULL;
 
-    if(!pCurl || IsNullOrEmptyString(pszData))
+    if(!pCurl || !pData || IsNullOrEmptyString(pszData))
     {
         dwError = ERROR_TDNF_INVALID_PARAMETER;
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
-    pData = calloc(1, sizeof(pcb_data));
-    if(!pData)
-    {
-        dwError = ENOMEM;
-        BAIL_ON_TDNF_SYSTEM_ERROR_UNCOND(dwError);
-    }
+    memset(pData, 0, sizeof(*pData));
     pData->row = -1;
+    strncpy(pData->pszData, pszData, sizeof(pData->pszData) - 1);
 
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, progress_cb);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
-    strncpy(pData->pszData, pszData, sizeof(pData->pszData) - 1);
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, pData);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
@@ -272,7 +266,6 @@ cleanup:
     return dwError;
 
 error:
-    if(pData) free(pData);
     goto cleanup;
 }
 
@@ -354,8 +347,7 @@ TDNFMultiAdd(CURL *pCurl, FILE *fp, const char *pszTmp, const char *pszDest,
         strncpy(h->cb.pszData, pszProgress, sizeof(h->cb.pszData)-1);
 
     curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, fp);
-    md_set_progress_cb(pCurl, pszProgress ? pszProgress : "");
-    curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, &h->cb);
+    md_set_progress_cb(pCurl, &h->cb, pszProgress ? pszProgress : "");
     curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(pCurl, CURLOPT_PRIVATE, h);
 
