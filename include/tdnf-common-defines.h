@@ -80,6 +80,14 @@
         }                                       \
     } while(0)
 
+/* ANSI color codes for enhanced CLI output */
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_RESET   "\x1b[0m"
+
+
 #define LOG_INFO    0
 #define LOG_ERR     1
 #define LOG_CRIT    2
