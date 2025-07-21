@@ -511,7 +511,9 @@ TDNFCliSearchCommand(
         for(dwIndex = 0; dwIndex < dwCount; ++dwIndex)
         {
             pPkg = &pPkgInfo[dwIndex];
-            pr_crit("%s : %s\n", pPkg->pszName, pPkg->pszSummary);
+            pr_crit(COLOR_GREEN "%s" COLOR_RESET " : %s\n",
+                    pPkg->pszName,
+                    pPkg->pszSummary);
         }
     }
 
