@@ -680,19 +680,19 @@ PrintAction(
     switch(nAlterType)
     {
         case ALTER_INSTALL:
-            pr_info("\nInstalling:");
+            pr_info("\n" COLOR_BLUE "Installing:" COLOR_RESET);
             break;
         case ALTER_UPGRADE:
             pr_info("\nUpgrading:");
             break;
         case ALTER_ERASE:
-            pr_info("\nRemoving:");
+            pr_info("\n" COLOR_RED "Removing:" COLOR_RESET);
             break;
         case ALTER_DOWNGRADE:
             pr_info("\nDowngrading:");
             break;
         case ALTER_REINSTALL:
-            pr_info("\nReinstalling:");
+            pr_info("\n" COLOR_BLUE "Reinstalling:" COLOR_RESET);
             break;
         case ALTER_OBSOLETED:
             pr_info("\nObsoleting:");
