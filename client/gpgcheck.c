@@ -19,6 +19,8 @@
  */
 
 #include "includes.h"
+#include <rpm/rpmpgp.h>
+
 
 uint32_t
 TDNFGPGCheck(
@@ -150,11 +152,10 @@ AddKeyPktToKeyring(
     )
 {
     uint32_t dwError = 0;
-    pgpDig pDig = NULL;
-    rpmPubkey pPubkey = NULL;
 #ifdef HAVE_RPM_KEYRING_LOOKUP
-    pgpDig pDig = NULL;
+    pgpDigParams pDig = NULL;
 #endif
+    rpmPubkey pPubkey = NULL;
 
     if(!pKeyring || !pPkt || nPktLen == 0)
     {
@@ -170,7 +171,7 @@ AddKeyPktToKeyring(
     }
 
 #ifdef HAVE_RPM_KEYRING_LOOKUP
-    pDig = rpmPubkeyDig(pPubkey);
+    pDig = rpmPubkeyPgpDigParams(pPubkey);
     if(!pDig)
     {
         dwError = ERROR_TDNF_CREATE_PUBKEY_FAILED;
@@ -214,9 +215,9 @@ VerifyRpmSig(
 #ifdef HAVE_RPM_KEYRING_LOOKUP
     rpmtd pTD = NULL;
     Header pPkgHeader = NULL;
-    pgpDig pDigest = NULL;
+    pgpDigParams pDigest = NULL;
 #else
-    const char *argv[2] = { pszPkgFile, NULL };
+    char *argv[2] = { (char *)pszPkgFile, NULL };
 #endif
     
     if(!pKeyring || IsNullOrEmptyString(pszPkgFile))
@@ -292,7 +293,7 @@ cleanup:
 #ifdef HAVE_RPM_KEYRING_LOOKUP
     if(pDigest)
     {
-        pgpFreeDig(pDigest);
+        pgpDigParamsFree(pDigest);
     }
     if(pPkgHeader)
     {
