@@ -789,6 +789,9 @@ TDNFTransAddInstallPkgs(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+    dwError = TDNFPreDownloadPackages(pTdnf, pInfos);
+    BAIL_ON_TDNF_ERROR(dwError);
+	
     for (pInfo = pInfos; pInfo; pInfo = pInfo->pNext)
     {
         PTDNF_REPO_DATA pRepo = NULL;
