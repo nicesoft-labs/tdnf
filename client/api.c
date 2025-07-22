@@ -600,6 +600,8 @@ TDNFOpenHandle(
     char *pszCacheDir = NULL;
     char *pszRepoDir = NULL;
     int nHasOptReposdir = 0;
+    int nHasOptParallelDownloads = 0;
+    char *pszParallelDownloads = NULL;
     PTDNF_CMD_OPT pOpt = NULL;
 
     if(!pArgs || !ppTdnf)
@@ -630,6 +632,9 @@ TDNFOpenHandle(
     GlobalSetDnfCheckUpdateCompat(pTdnf->pConf->nCheckUpdateCompat);
 
     dwError = TDNFHasOpt(pTdnf->pArgs, TDNF_SETOPT_KEY_REPOSDIR, &nHasOptReposdir);
+    BAIL_ON_TDNF_ERROR(dwError);
+    dwError = TDNFHasOpt(pTdnf->pArgs, TDNF_SETOPT_KEY_PARALLEL_DOWNLOADS,
+                         &nHasOptParallelDownloads);
     BAIL_ON_TDNF_ERROR(dwError);
 
     if (!IsNullOrEmptyString(pTdnf->pArgs->pszInstallRoot) &&
@@ -676,6 +681,18 @@ TDNFOpenHandle(
         TDNF_SAFE_FREE_MEMORY(pTdnf->pConf->pszRepoDir);
         dwError = TDNFGetCmdOptValue(pTdnf->pArgs, TDNF_SETOPT_KEY_REPOSDIR, &pTdnf->pConf->pszRepoDir);
         BAIL_ON_TDNF_ERROR(dwError);
+    }
+    if (nHasOptParallelDownloads)
+    {
+        dwError = TDNFGetCmdOptValue(pTdnf->pArgs,
+                                     TDNF_SETOPT_KEY_PARALLEL_DOWNLOADS,
+                                     &pszParallelDownloads);
+        BAIL_ON_TDNF_ERROR(dwError);
+        if (pszParallelDownloads)
+        {
+            pTdnf->pConf->nParallelDownloads = atoi(pszParallelDownloads);
+        }
+        TDNF_SAFE_FREE_MEMORY(pszParallelDownloads);
     }
 
     /* set macros from command line */
