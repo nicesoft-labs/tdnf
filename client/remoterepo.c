@@ -628,3 +628,107 @@ error:
     TDNF_SAFE_FREE_MEMORY(pszFilePath);
     goto cleanup;
 }
+
+
+typedef struct _TDNF_DOWNLOAD_TASK
+{
+    PTDNF pTdnf;
+    PTDNF_PKG_INFO pInfo;
+    PTDNF_REPO_DATA pRepo;
+    uint32_t dwError;
+} TDNF_DOWNLOAD_TASK, *PTDNF_DOWNLOAD_TASK;
+
+static void*
+_download_task_fn(void *data)
+{
+    PTDNF_DOWNLOAD_TASK task = (PTDNF_DOWNLOAD_TASK)data;
+    char *pszPath = NULL;
+    if (!task->pTdnf->pArgs->nDownloadOnly ||
+        task->pTdnf->pArgs->pszDownloadDir == NULL)
+    {
+        task->dwError = TDNFDownloadPackageToCache(task->pTdnf,
+                                                   task->pInfo->pszLocation,
+                                                   task->pInfo->pszName,
+                                                   task->pRepo,
+                                                   &pszPath);
+    }
+    else
+    {
+        task->dwError = TDNFDownloadPackageToDirectory(task->pTdnf,
+                                                       task->pInfo->pszLocation,
+                                                       task->pInfo->pszName,
+                                                       task->pRepo,
+                                                       task->pTdnf->pArgs->pszDownloadDir,
+                                                       &pszPath);
+    }
+    TDNF_SAFE_FREE_MEMORY(pszPath);
+    return NULL;
+}
+
+uint32_t
+TDNFPreDownloadPackages(
+    PTDNF pTdnf,
+    PTDNF_PKG_INFO pInfos
+    )
+{
+    uint32_t dwError = 0;
+    int count = 0, idx = 0, running = 0;
+    PTDNF_PKG_INFO p = NULL;
+    pthread_t *threads = NULL;
+    PTDNF_DOWNLOAD_TASK tasks = NULL;
+
+    for (p = pInfos; p; p = p->pNext)
+        count++;
+
+    if (count == 0)
+        return 0;
+
+    threads = calloc(count, sizeof(pthread_t));
+    tasks = calloc(count, sizeof(TDNF_DOWNLOAD_TASK));
+    if (!threads || !tasks)
+    {
+        dwError = ERROR_TDNF_INVALID_ALLOCSIZE;
+        goto cleanup;
+    }
+
+    int nParallel = pTdnf->pConf->nParallelDownloads;
+    if (nParallel < 1)
+        nParallel = 1;
+
+    for (p = pInfos, idx = 0; p; p = p->pNext, idx++)
+    {
+        tasks[idx].pTdnf = pTdnf;
+        tasks[idx].pInfo = p;
+        dwError = TDNFFindRepoById(pTdnf, p->pszRepoName, &tasks[idx].pRepo);
+        BAIL_ON_TDNF_ERROR(dwError);
+
+        pthread_create(&threads[idx], NULL, _download_task_fn, &tasks[idx]);
+        running++;
+        if (running >= nParallel)
+        {
+            pthread_join(threads[idx - nParallel + 1], NULL);
+            running--;
+        }
+    }
+
+    for (int j = idx - running; j < idx; j++)
+    {
+        pthread_join(threads[j], NULL);
+    }
+
+    for (int i = 0; i < idx; i++)
+    {
+        if (tasks[i].dwError)
+        {
+            dwError = tasks[i].dwError;
+            break;
+        }
+    }
+
+cleanup:
+    free(threads);
+    free(tasks);
+    return dwError;
+error:
+    goto cleanup;
+}
