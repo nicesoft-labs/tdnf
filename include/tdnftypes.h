@@ -254,6 +254,7 @@ typedef struct _TDNF_CONF
     int nCleanRequirementsOnRemove;
     int nKeepCache;
     int nOpenMax;          //set max number of open files
+    int nParallelDownloads;
     int nCheckUpdateCompat;
     int nDistroSyncReinstallChanged;
     char* pszRepoDir;
