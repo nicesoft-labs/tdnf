@@ -266,6 +266,13 @@ TDNFDownloadPackageToDirectory(
     char** ppszFilePath
     );
 
+uint32_t
+TDNFPreDownloadPackages(
+    PTDNF pTdnf,
+    PTDNF_PKG_INFO pInfos
+    );
+
+
 //packageutils.c
 uint32_t
 TDNFMatchForReinstall(
