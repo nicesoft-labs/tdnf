@@ -41,6 +41,8 @@
 #define TDNF_CONF_KEY_OPENMAX             "openmax"
 #define TDNF_CONF_KEY_CHECK_UPDATE_COMPAT "dnf_check_update_compat"
 #define TDNF_CONF_KEY_DISTROSYNC_REINSTALL_CHANGED "distrosync_reinstall_changed"
+#define TDNF_CONF_KEY_PARALLEL_DOWNLOADS  "parallelDownloads"
+
 
 //Repo file key names
 #define TDNF_REPO_KEY_BASEURL             "baseurl"
@@ -90,6 +92,8 @@
 #define TDNF_SOLVCACHE_DIR_NAME           "solvcache"
 #define TDNF_REPO_METADATA_EXPIRE_NEVER   "never"
 #define TDNF_DEFAULT_OPENMAX              1024
+#define TDNF_DEFAULT_PARALLEL_DOWNLOADS   4
+
 
 // repo default settings
 #define TDNF_REPO_DEFAULT_ENABLED            0
