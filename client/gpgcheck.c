@@ -152,6 +152,9 @@ AddKeyPktToKeyring(
     uint32_t dwError = 0;
     pgpDig pDig = NULL;
     rpmPubkey pPubkey = NULL;
+#ifdef HAVE_RPM_KEYRING_LOOKUP
+    pgpDig pDig = NULL;
+#endif
 
     if(!pKeyring || !pPkt || nPktLen == 0)
     {
@@ -166,6 +169,7 @@ AddKeyPktToKeyring(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+#ifdef HAVE_RPM_KEYRING_LOOKUP
     pDig = rpmPubkeyDig(pPubkey);
     if(!pDig)
     {
@@ -179,6 +183,7 @@ AddKeyPktToKeyring(
         dwError = 0;//key exists
     }
     else
+#endif
     {
         dwError = rpmKeyringAddKey(pKeyring, pPubkey);
         if(dwError == 1)
@@ -206,10 +211,14 @@ VerifyRpmSig(
     uint32_t dwError = 0;
     FD_t pFD_t = NULL;
     rpmts pTS = NULL;
+#ifdef HAVE_RPM_KEYRING_LOOKUP
     rpmtd pTD = NULL;
     Header pPkgHeader = NULL;
     pgpDig pDigest = NULL;
-
+#else
+    const char *argv[2] = { pszPkgFile, NULL };
+#endif
+    
     if(!pKeyring || IsNullOrEmptyString(pszPkgFile))
     {
         dwError = ERROR_TDNF_INVALID_PARAMETER;
@@ -229,6 +238,8 @@ VerifyRpmSig(
         dwError = ERROR_TDNF_RPMTS_CREATE_FAILED;
         BAIL_ON_TDNF_RPM_ERROR(dwError);
     }
+    
+#ifdef HAVE_RPM_KEYRING_LOOKUP
     rpmtsSetVSFlags (pTS, _RPMVSF_NOSIGNATURES);
 
     pTD = rpmtdNew();
@@ -265,12 +276,20 @@ VerifyRpmSig(
         dwError = ERROR_TDNF_RPM_GPG_NO_MATCH;
         BAIL_ON_TDNF_ERROR(dwError);
     }
-
+#else
+    rpmtsSetKeyring(pTS, rpmKeyringLink(pKeyring));
+    if(rpmcliVerifySignatures(pTS, argv))
+    {
+        dwError = ERROR_TDNF_RPM_GPG_NO_MATCH;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+#endif
 cleanup:
     if(pFD_t)
     {
         Fclose(pFD_t);
     }
+#ifdef HAVE_RPM_KEYRING_LOOKUP
     if(pDigest)
     {
         pgpFreeDig(pDigest);
@@ -283,6 +302,7 @@ cleanup:
     {
         rpmtdFree(pTD);
     }
+#endif
     if(pTS)
     {
         rpmtsFree(pTS);
