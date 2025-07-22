@@ -52,6 +52,7 @@ target_link_libraries(${LIB_TDNF}
     ${CURL_LIBRARIES}
     ${OPENSSL_LIBRARIES}
     ${SQLITE3_LIBRARIES}
+    pthread
 )
 
 set_target_properties(${LIB_TDNF} PROPERTIES
