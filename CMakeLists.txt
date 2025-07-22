@@ -67,6 +67,21 @@ pkg_check_modules(SQLITE3 sqlite3)
 include_directories(${RPM_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIRS})
 
+include(CheckFunctionExists)
+set(CMAKE_REQUIRED_LIBRARIES ${RPM_LIBRARIES})
+set(CMAKE_REQUIRED_INCLUDES ${RPM_INCLUDE_DIRS})
+check_function_exists(rpmKeyringLookup HAVE_RPM_KEYRING_LOOKUP)
+check_function_exists(rpmPubkeyDig HAVE_RPM_PUBKEY_DIG)
+set(CMAKE_REQUIRED_LIBRARIES "")
+set(CMAKE_REQUIRED_INCLUDES "")
+if(HAVE_RPM_KEYRING_LOOKUP)
+    add_compile_definitions(HAVE_RPM_KEYRING_LOOKUP)
+endif()
+if(HAVE_RPM_PUBKEY_DIG)
+    add_compile_definitions(HAVE_RPM_PUBKEY_DIG)
+endif()
+
+
 ### External dependency: libsolv
 find_package(LibSolv REQUIRED ext)
 
