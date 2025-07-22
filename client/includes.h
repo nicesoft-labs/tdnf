@@ -29,6 +29,8 @@
 #include <sys/utsname.h>
 #include <sys/vfs.h>
 #include <sys/types.h>
+#include <pthread.h>
+
 
 #include <dirent.h>
 
