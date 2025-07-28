@@ -743,6 +743,8 @@ TDNFRunTransaction(
             BAIL_ON_TDNF_ERROR(dwError);
         }
         pr_info("Running transaction\n");
+	    
+        TDNFPrintTransHeader();
 
         rpmtsSetFlags(pTS->pTS, pTS->nTransFlags);
         rc = rpmtsRun(pTS->pTS, NULL, pTS->nProbFilterFlags);
@@ -751,6 +753,9 @@ TDNFRunTransaction(
             dwError = ERROR_TDNF_TRANSACTION_FAILED;
             BAIL_ON_TDNF_ERROR(dwError);
         }
+	    
+        TDNFPrintTransTable(pTS);
+        TDNFFreeTransEntries(pTS);
     }
 
 cleanup:
@@ -1067,6 +1072,141 @@ error:
     goto cleanup;
 }
 
+static uint32_t
+TDNFAddTransEntry(
+    PTDNFRPMTS pTS,
+    const char *pszNevra,
+    TDNF_TRANS_ACTION nAction
+    )
+{
+    uint32_t dwError = 0;
+    PTDNF_TRANS_ENTRY pEntry = NULL;
+
+    if(!pTS || IsNullOrEmptyString(pszNevra))
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    dwError = TDNFAllocateMemory(1, sizeof(*pEntry), (void**)&pEntry);
+    BAIL_ON_TDNF_ERROR(dwError);
+
+    dwError = TDNFAllocateString(pszNevra, &pEntry->pszNevra);
+    BAIL_ON_TDNF_ERROR(dwError);
+
+    pEntry->nAction = nAction;
+
+    if(!pTS->pTransHead)
+    {
+        pTS->pTransHead = pEntry;
+    }
+    else
+    {
+        pTS->pTransTail->pNext = pEntry;
+    }
+    pTS->pTransTail = pEntry;
+
+cleanup:
+    return dwError;
+
+error:
+    if(pEntry)
+    {
+        TDNF_SAFE_FREE_MEMORY(pEntry->pszNevra);
+        TDNF_SAFE_FREE_MEMORY(pEntry);
+    }
+    goto cleanup;
+}
+
+static void
+TDNFFreeTransEntries(
+    PTDNFRPMTS pTS
+    )
+{
+    PTDNF_TRANS_ENTRY pEntry = NULL;
+    PTDNF_TRANS_ENTRY pNext = NULL;
+
+    if(!pTS)
+    {
+        return;
+    }
+
+    pEntry = pTS->pTransHead;
+    while(pEntry)
+    {
+        pNext = pEntry->pNext;
+        TDNF_SAFE_FREE_MEMORY(pEntry->pszNevra);
+        TDNF_SAFE_FREE_MEMORY(pEntry);
+        pEntry = pNext;
+    }
+    pTS->pTransHead = pTS->pTransTail = NULL;
+}
+
+static void
+TDNFPrintTransHeader()
+{
+    printf(COLOR_YELLOW "%-40s %-20s %-10s" COLOR_RESET "\n", "Name", "Version", "Action");
+}
+
+static void
+TDNFPrintTransTable(
+    PTDNFRPMTS pTS
+    )
+{
+    PTDNF_TRANS_ENTRY pEntry = NULL;
+
+    if(!pTS || !pTS->pTransHead)
+    {
+        return;
+    }
+
+    for(pEntry = pTS->pTransHead; pEntry; pEntry = pEntry->pNext)
+    {
+        char *pszName = NULL;
+        char *pszVersion = NULL;
+        const char *pszColor = NULL;
+        const char *pszAction = NULL;
+
+        const char *dash = strchr(pEntry->pszNevra, '-');
+        if(dash)
+        {
+            TDNFAllocateStringN(pEntry->pszNevra, dash - pEntry->pszNevra, &pszName);
+            TDNFAllocateString(dash + 1, &pszVersion);
+        }
+        else
+        {
+            TDNFAllocateString(pEntry->pszNevra, &pszName);
+        }
+
+        switch(pEntry->nAction)
+        {
+            case TDNF_TRANS_ACTION_REMOVE:
+                pszColor = COLOR_RED;
+                pszAction = "Remove";
+                break;
+            case TDNF_TRANS_ACTION_REINSTALL:
+                pszColor = COLOR_BLUE;
+                pszAction = "Reinstall";
+                break;
+            default:
+                pszColor = COLOR_BLUE;
+                pszAction = "Install";
+                break;
+        }
+
+        printf("%-40s %-20s %s%s%s\n",
+               pszName ? pszName : "",
+               pszVersion ? pszVersion : "",
+               pszColor,
+               pszAction,
+               COLOR_RESET);
+
+        TDNF_SAFE_FREE_MEMORY(pszName);
+        TDNF_SAFE_FREE_MEMORY(pszVersion);
+    }
+}
+
+
 void*
 TDNFRpmCB(
      const void* pArg,
@@ -1104,26 +1244,20 @@ TDNFRpmCB(
         case RPMCALLBACK_UNINST_START:
             if(pTS->nQuiet)
                 break;
-            if(what == RPMCALLBACK_INST_START)
-            {
-                pr_info("%s", "Installing/Updating: ");
-            }
-            else
-            {
-                pr_info("%s", "Removing: ");
-            }
             {
                 char* pszNevra = NULL;
                 if (!headerIsSource(pPkgHeader)) {
                     pszNevra = headerGetAsString(pPkgHeader, RPMTAG_NEVRA);
-                    pr_info("%s\n", pszNevra);
                 } else {
-                    /* don't confuse users with arch */
                     pszNevra = headerGetAsString(pPkgHeader, RPMTAG_NEVR);
-                    pr_info("%s (source)\n", pszNevra);
+                }
+                if(pszNevra)
+                {
+                    TDNFAddTransEntry(pTS, pszNevra,
+                        what == RPMCALLBACK_UNINST_START ?
+                        TDNF_TRANS_ACTION_REMOVE : TDNF_TRANS_ACTION_INSTALL);
                 }
                 free(pszNevra);
-                (void)fflush(stdout);
             }
             break;
         case RPMCALLBACK_SCRIPT_ERROR:
