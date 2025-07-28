@@ -1,25 +1,31 @@
 /*
- * Copyright (C) 2015-2023 VMware, Inc. All Rights Reserved.
+ * Copyright (C) 2015-2023 VMware, Inc. Все права защищены.
  *
- * Licensed under the GNU General Public License v2 (the "License");
- * you may not use this file except in compliance with the License. The terms
- * of the License are located in the COPYING file of this distribution.
+ * Лицензировано под GNU General Public License v2 (the "License");
+ * вы не можете использовать этот файл, кроме как в соответствии с Лицензией.
+ * Условия Лицензии находятся в файле COPYING этой дистрибуции.
  */
 
 /*
- * Module   : installcmd.c
+ * Модуль   : installcmd.c
  *
- * Abstract :
+ * Аннотация :
  *
  *            tdnf
  *
- *            command line tool
+ *            инструмент командной строки
  *
- * Authors  : Priyesh Padmavilasom (ppadmavilasom@vmware.com)
+ * Авторы   : Прийеш Падмавиласом (ppadmavilasom@vmware.com)
  *
  */
 
 #include "includes.h"
+
+#define COLOR_BLUE "\033[1;34m"
+#define COLOR_RED "\033[1;31m"
+#define COLOR_RESET "\033[0m"
+#define BOLD "\033[1m\033[30m"
+#define RESET "\033[0m"
 
 uint32_t
 TDNFCliInstallCommand(
@@ -192,7 +198,6 @@ TDNFCliAskForAction(
     if(!pSolvedPkgInfo->nNeedAction)
     {
         dwError = ERROR_TDNF_CLI_NOTHING_TO_DO;
-        //If there are unresolved, error with no match
         if(pSolvedPkgInfo->ppszPkgsNotResolved &&
            *pSolvedPkgInfo->ppszPkgsNotResolved)
         {
@@ -211,7 +216,7 @@ TDNFCliAskForAction(
         }
         if (pCmdArgs->nDownloadOnly)
         {
-            pr_info("tdnf will only download packages needed for the transaction\n");
+            pr_info(COLOR_BLUE "tdnf будет только загружать пакеты, необходимые для транзакции\n" COLOR_RESET);
         }
     }
 
@@ -219,7 +224,7 @@ TDNFCliAskForAction(
     {
         int nAnswer = 0;
 
-        dwError = TDNFYesOrNo(pCmdArgs, "Is this ok [y/N]: ", &nAnswer);
+        dwError = TDNFYesOrNo(pCmdArgs, COLOR_BLUE "Это нормально? [y/N]: " COLOR_RESET, &nAnswer);
         BAIL_ON_CLI_ERROR(dwError);
 
         if(!nAnswer)
@@ -255,15 +260,15 @@ TDNFCliPrintActionComplete(
 
     if(!nSilent)
     {
-        pr_info("\nComplete!\n");
+        pr_info("\n" COLOR_BLUE "Завершено!\n" COLOR_RESET);
         if (pCmdArgs->nDownloadOnly)
         {
             if (pCmdArgs->pszDownloadDir != NULL)
             {
-                pr_info("Packages have been downloaded to %s.\n",
+                pr_info(COLOR_BLUE "Пакеты были загружены в %s.\n" COLOR_RESET,
                         pCmdArgs->pszDownloadDir);
             } else {
-                pr_info("Packages have been downloaded to cache.\n");
+                pr_info(COLOR_BLUE "Пакеты были загружены в кэш.\n" COLOR_RESET);
             }
         }
     }
@@ -382,11 +387,11 @@ JDPkgList(
 
         CHECK_JD_RC(jd_map_start(jd_pkg));
 
-        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Name", pPkgInfo->pszName));
-        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Arch", pPkgInfo->pszArch));
+        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Имя", pPkgInfo->pszName));
+        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Архитектура", pPkgInfo->pszArch));
         CHECK_JD_RC(jd_map_add_fmt(jd_pkg, "Evr", "%s-%s", pPkgInfo->pszVersion, pPkgInfo->pszRelease));
-        CHECK_JD_RC(jd_map_add_int(jd_pkg, "InstallSize", pPkgInfo->dwInstallSizeBytes));
-        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Repo", pPkgInfo->pszRepoName));
+        CHECK_JD_RC(jd_map_add_int(jd_pkg, "Размер установки", pPkgInfo->dwInstallSizeBytes));
+        CHECK_JD_RC(jd_map_add_string(jd_pkg, "Репозиторий", pPkgInfo->pszRepoName));
 
         CHECK_JD_RC(jd_list_add_child(jd_list, jd_pkg));
         JD_SAFE_DESTROY(jd_pkg);
@@ -422,55 +427,55 @@ PrintSolvedInfoJson(
     if(pSolvedPkgInfo->pPkgsExisting)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsExisting, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Exist", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Существующие", jd_list));
         JD_SAFE_DESTROY(jd);
     }
     if(pSolvedPkgInfo->pPkgsNotAvailable)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsNotAvailable, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Unavailable", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Недоступные", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsToInstall)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsToInstall, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Install", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Установить", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsToUpgrade)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsToUpgrade, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Upgrade", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Обновить", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsToDowngrade)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsToDowngrade, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Downgrade", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Понизить", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsToRemove)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsToRemove, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Remove", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Удалить", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsUnNeeded)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsUnNeeded, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "UnNeeded", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Ненужные", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsToReinstall)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsToReinstall, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Reinstall", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Переустановить", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     if(pSolvedPkgInfo->pPkgsObsoleted)
     {
         dwError = JDPkgList(pSolvedPkgInfo->pPkgsObsoleted, &jd_list);
-        CHECK_JD_RC(jd_map_add_child(jd, "Obsolete", jd_list));
+        CHECK_JD_RC(jd_map_add_child(jd, "Устаревшие", jd_list));
         JD_SAFE_DESTROY(jd_list);
     }
     pr_json(jd->buf);
@@ -562,8 +567,6 @@ PrintNotAvailable(
 {
     uint32_t dwError = 0;
     int i = 0;
-    #define BOLD "\033[1m\033[30m"
-    #define RESET   "\033[0m"
 
     if(!ppszPkgsNotAvailable)
     {
@@ -573,7 +576,7 @@ PrintNotAvailable(
 
     while(ppszPkgsNotAvailable[i])
     {
-        pr_info("No package " BOLD "%s " RESET "available\n",
+        pr_info(COLOR_RED "Пакет " BOLD "%s " RESET "недоступен\n" COLOR_RESET,
                 ppszPkgsNotAvailable[i]);
         ++i;
     }
@@ -584,12 +587,11 @@ error:
 }
 
 uint32_t
-PrintExistingPackagesSkipped(
+PrintExisting AghExistingPackagesSkipped(
     PTDNF_PKG_INFO pPkgInfos
     )
 {
     uint32_t dwError = 0;
-
     PTDNF_PKG_INFO pPkgInfo = NULL;
 
     if(!pPkgInfos)
@@ -602,7 +604,7 @@ PrintExistingPackagesSkipped(
     while(pPkgInfo)
     {
         pr_info(
-            "Package %s-%s-%s.%s is already installed, skipping.\n",
+            COLOR_BLUE "Пакет %s-%s-%s.%s уже установлен, пропускается.\n" COLOR_RESET,
             pPkgInfo->pszName,
             pPkgInfo->pszVersion,
             pPkgInfo->pszRelease,
@@ -623,7 +625,6 @@ PrintNotAvailablePackages(
     )
 {
     uint32_t dwError = 0;
-
     PTDNF_PKG_INFO pPkgInfo = NULL;
 
     if(!pPkgInfos)
@@ -636,7 +637,7 @@ PrintNotAvailablePackages(
     while(pPkgInfo)
     {
         pr_info(
-            "No package %s available.\n",
+            COLOR_RED "Пакет %s недоступен.\n" COLOR_RESET,
             pPkgInfo->pszName);
         pPkgInfo = pPkgInfo->pNext;
     }
@@ -663,7 +664,7 @@ PrintAction(
     char *pszEmptyString = "";
 
     #define COL_COUNT 6
-    //Name | Arch | [Epoch:]Version-Release | Repository | Install Size | Download Size
+    //Имя | Архитектура | [Эпоха:]Версия-Релиз | Репозиторий | Размер установки | Размер загрузки
     int nColPercents[COL_COUNT] = {20, 15, 20, 15, 10, 10};
     int nColWidths[COL_COUNT] = {0};
 
@@ -680,22 +681,22 @@ PrintAction(
     switch(nAlterType)
     {
         case ALTER_INSTALL:
-            pr_info("\n" COLOR_BLUE "Installing:" COLOR_RESET);
+            pr_info("\n" COLOR_BLUE "Установка:" COLOR_RESET);
             break;
         case ALTER_UPGRADE:
-            pr_info("\nUpgrading:");
+            pr_info("\n" COLOR_BLUE "Обновление:" COLOR_RESET);
             break;
         case ALTER_ERASE:
-            pr_info("\n" COLOR_RED "Removing:" COLOR_RESET);
+            pr_info("\n" COLOR_RED "Удаление:" COLOR_RESET);
             break;
         case ALTER_DOWNGRADE:
-            pr_info("\nDowngrading:");
+            pr_info("\n" COLOR_BLUE "Понижение версии:" COLOR_RESET);
             break;
         case ALTER_REINSTALL:
-            pr_info("\n" COLOR_BLUE "Reinstalling:" COLOR_RESET);
+            pr_info("\n" COLOR_BLUE "Переустановка:" COLOR_RESET);
             break;
         case ALTER_OBSOLETED:
-            pr_info("\nObsoleting:");
+            pr_info("\n" COLOR_BLUE "Устаревание:" COLOR_RESET);
             break;
         default:
             dwError = ERROR_TDNF_INVALID_PARAMETER;
@@ -768,11 +769,11 @@ PrintAction(
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info("\nTotal installed size: %s\n", pszTotalInstallSize);
+    pr_info(COLOR_BLUE "\nОбщий размер установки: %s\n" COLOR_RESET, pszTotalInstallSize);
 
     dwError = TDNFUtilsFormatSize(nTotalDownloadSize, &pszTotalDownloadSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info("Total download size: %s\n", pszTotalDownloadSize);
+    pr_info(COLOR_BLUE "Общий размер загрузки: %s\n" COLOR_RESET, pszTotalDownloadSize);
 
 cleanup:
     TDNFFreeMemory(pszTotalInstallSize);
