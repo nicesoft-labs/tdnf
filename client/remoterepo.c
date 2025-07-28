@@ -30,7 +30,6 @@ _redraw_progress_locked()
     if(!g_pProgressStates)
         return;
 
-    printf("\033[%dA", g_nProgressStates);
     for(int i = 0; i < g_nProgressStates; i++)
     {
         PROGRESS_STATE *st = &g_pProgressStates[i];
@@ -315,9 +314,8 @@ TDNFDownloadFile(
         {
             g_pProgressStates[g_tls_progress_index].active = 0;
             _redraw_progress_locked();
-            printf("\033[%dB", g_nProgressStates);
             pr_info("%s completed\n", pszProgressData);
-            printf("\033[%dA", g_nProgressStates);
+            printf("\033[1A");
         }
         pthread_mutex_unlock(&g_progress_mutex);
     }
