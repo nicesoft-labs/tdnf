@@ -7,6 +7,58 @@
  */
 
 #include "includes.h"
+#include <pthread.h>
+
+typedef struct _PROGRESS_STATE
+{
+    time_t cur_time;
+    time_t prev_time;
+    curl_off_t dlTotal;
+    curl_off_t dlNow;
+    char pszData[64];
+    int active;
+} PROGRESS_STATE, *PPROGRESS_STATE;
+
+static PPROGRESS_STATE g_pProgressStates = NULL;
+static int g_nProgressStates = 0;
+static pthread_mutex_t g_progress_mutex = PTHREAD_MUTEX_INITIALIZER;
+static __thread int g_tls_progress_index = -1;
+
+static void
+_redraw_progress_locked()
+{
+    if(!g_pProgressStates)
+        return;
+
+    printf("\033[%dA", g_nProgressStates);
+    for(int i = 0; i < g_nProgressStates; i++)
+    {
+        PROGRESS_STATE *st = &g_pProgressStates[i];
+        printf("\033[2K");
+        if(st->active)
+        {
+            int percent = 0;
+            if(st->dlTotal > 0)
+            {
+                percent = (int)(((double)st->dlNow / (double)st->dlTotal) * 100.0);
+            }
+            int bar = 20;
+            int filled = (st->dlTotal > 0) ? (int)((double)st->dlNow * bar / st->dlTotal) : 0;
+            printf("%-20s [" COLOR_GREEN, st->pszData);
+            for(int j = 0; j < filled; j++)
+                printf("#");
+            for(int j = filled; j < bar; j++)
+                printf(" ");
+            printf(COLOR_RESET "] %3d%%\n", percent);
+        }
+        else
+        {
+            printf("\n");
+        }
+    }
+    printf("\033[%dA", g_nProgressStates);
+    fflush(stdout);
+}
 
 static int
 progress_cb(
@@ -17,8 +69,7 @@ progress_cb(
     curl_off_t ulNow
     )
 {
-    uint32_t dPercent;
-    pcb_data *pData = (pcb_data *)pUserData;
+    PROGRESS_STATE *pState = (PROGRESS_STATE *)pUserData;
 
     UNUSED(ulNow);
     UNUSED(ulTotal);
@@ -30,31 +81,25 @@ progress_cb(
 
     if (dlNow < dlTotal)
     {
-        time(&pData->cur_time);
-        if (pData->prev_time &&
-            difftime(pData->cur_time, pData->prev_time) < 1.0)
+        time(&pState->cur_time);
+        if (pState->prev_time &&
+            difftime(pState->cur_time, pState->prev_time) < 1.0)
         {
             return 0;
         }
-        pData->prev_time = pData->cur_time;
-        dPercent = (uint32_t)(((double)dlNow / (double)dlTotal) * 100.0);
+        pState->prev_time = pState->cur_time;
     }
     else
     {
-        pData->prev_time = 0;
-        dPercent = 100;
+        pState->prev_time = 0;
     }
 
-    if (!isatty(STDOUT_FILENO))
-    {
-        pr_info("%s %u%% %ld\n", pData->pszData, dPercent, dlNow);
-    }
-    else
-    {
-        pr_info("%-35s %10ld %u%%\r", pData->pszData, dlNow, dPercent);
-    }
+    pState->dlTotal = dlTotal;
+    pState->dlNow = dlNow;
 
-    fflush(stdout);
+    pthread_mutex_lock(&g_progress_mutex);
+    _redraw_progress_locked();
+    pthread_mutex_unlock(&g_progress_mutex);
 
     return 0;
 }
@@ -66,7 +111,7 @@ set_progress_cb(
     )
 {
     uint32_t dwError = 0;
-    static pcb_data pData;
+    PROGRESS_STATE *pState = NULL;
 
     if(!pCurl || IsNullOrEmptyString(pszData))
     {
@@ -77,10 +122,18 @@ set_progress_cb(
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, progress_cb);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
-    memset(&pData, 0, sizeof(pcb_data));
-    strncpy(pData.pszData, pszData, sizeof(pData.pszData) - 1);
+    if(g_tls_progress_index < 0 || g_tls_progress_index >= g_nProgressStates)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    pState = &g_pProgressStates[g_tls_progress_index];
+    memset(pState, 0, sizeof(PROGRESS_STATE));
+    strncpy(pState->pszData, pszData, sizeof(pState->pszData) - 1);
+    pState->active = 1;
     /* coverity[bad_sizeof] */
-    dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, &pData);
+    dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFODATA, pState);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
     dwError = curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 0L);
@@ -255,10 +308,18 @@ TDNFDownloadFile(
         fclose(fp);
         fp = NULL;
     }
-    /* finish progress line output,
-       but only if progrees was enabled */
+
     if (!nNoOutput) {
-        pr_info("\n");
+        pthread_mutex_lock(&g_progress_mutex);
+        if(g_tls_progress_index >=0 && g_tls_progress_index < g_nProgressStates)
+        {
+            g_pProgressStates[g_tls_progress_index].active = 0;
+            _redraw_progress_locked();
+            printf("\033[%dB", g_nProgressStates);
+            pr_info("%s completed\n", pszProgressData);
+            printf("\033[%dA", g_nProgressStates);
+        }
+        pthread_mutex_unlock(&g_progress_mutex);
     }
 
     dwError = curl_easy_getinfo(pCurl,
@@ -635,6 +696,7 @@ typedef struct _TDNF_DOWNLOAD_TASK
     PTDNF pTdnf;
     PTDNF_PKG_INFO pInfo;
     PTDNF_REPO_DATA pRepo;
+    int progress_index;
     uint32_t dwError;
 } TDNF_DOWNLOAD_TASK, *PTDNF_DOWNLOAD_TASK;
 
@@ -642,6 +704,7 @@ static void*
 _download_task_fn(void *data)
 {
     PTDNF_DOWNLOAD_TASK task = (PTDNF_DOWNLOAD_TASK)data;
+    g_tls_progress_index = task->progress_index;
     char *pszPath = NULL;
     if (!task->pTdnf->pArgs->nDownloadOnly ||
         task->pTdnf->pArgs->pszDownloadDir == NULL)
@@ -662,6 +725,7 @@ _download_task_fn(void *data)
                                                        &pszPath);
     }
     TDNF_SAFE_FREE_MEMORY(pszPath);
+    g_tls_progress_index = -1;
     return NULL;
 }
 
@@ -677,6 +741,9 @@ TDNFPreDownloadPackages(
     pthread_t *threads = NULL;
     PTDNF_DOWNLOAD_TASK tasks = NULL;
 
+    g_nProgressStates = 0;
+    g_pProgressStates = NULL;
+
     for (p = pInfos; p; p = p->pNext)
         count++;
 
@@ -685,10 +752,18 @@ TDNFPreDownloadPackages(
 
     threads = calloc(count, sizeof(pthread_t));
     tasks = calloc(count, sizeof(TDNF_DOWNLOAD_TASK));
-    if (!threads || !tasks)
+    g_pProgressStates = calloc(count, sizeof(PROGRESS_STATE));
+    g_nProgressStates = count;
+    if (!threads || !tasks || !g_pProgressStates)
     {
         dwError = ERROR_TDNF_INVALID_ALLOCSIZE;
         goto cleanup;
+    }
+
+    if (isatty(STDOUT_FILENO) && !pTdnf->pArgs->nQuiet)
+    {
+        for(int i = 0; i < count; i++)
+            printf("\n");
     }
 
     int nParallel = pTdnf->pConf->nParallelDownloads;
@@ -701,6 +776,8 @@ TDNFPreDownloadPackages(
         tasks[idx].pInfo = p;
         dwError = TDNFFindRepoById(pTdnf, p->pszRepoName, &tasks[idx].pRepo);
         BAIL_ON_TDNF_ERROR(dwError);
+        tasks[idx].progress_index = idx;
+
 
         pthread_create(&threads[idx], NULL, _download_task_fn, &tasks[idx]);
         running++;
@@ -728,6 +805,9 @@ TDNFPreDownloadPackages(
 cleanup:
     free(threads);
     free(tasks);
+    free(g_pProgressStates);
+    g_pProgressStates = NULL;
+    g_nProgressStates = 0;
     return dwError;
 error:
     goto cleanup;
