@@ -23,6 +23,10 @@
 
 #include "rpm/rpmcli.h"
 
+static void TDNFFreeTransEntries(PTDNFRPMTS pTS);
+static void TDNFPrintTransHeader(void);
+static void TDNFPrintTransTable(PTDNFRPMTS pTS);
+
 uint32_t
 TDNFRpmCleanupTS(PTDNF pTdnf,
                  PTDNFRPMTS pTS)
