@@ -41,6 +41,21 @@ typedef struct _TDNF_CACHED_RPM_LIST
     PTDNF_CACHED_RPM_ENTRY pHead;
 } TDNF_CACHED_RPM_LIST, *PTDNF_CACHED_RPM_LIST;
 
+typedef enum
+{
+    TDNF_TRANS_ACTION_INSTALL,
+    TDNF_TRANS_ACTION_REINSTALL,
+    TDNF_TRANS_ACTION_REMOVE
+} TDNF_TRANS_ACTION;
+
+typedef struct _TDNF_TRANS_ENTRY
+{
+    char *pszNevra;
+    TDNF_TRANS_ACTION nAction;
+    struct _TDNF_TRANS_ENTRY *pNext;
+} TDNF_TRANS_ENTRY, *PTDNF_TRANS_ENTRY;
+
+
 typedef struct _TDNF_RPM_TS_
 {
     int                     nQuiet;
@@ -49,6 +64,8 @@ typedef struct _TDNF_RPM_TS_
     rpmprobFilterFlags      nProbFilterFlags;
     FD_t                    pFD;
     PTDNF_CACHED_RPM_LIST   pCachedRpmsArray;
+    PTDNF_TRANS_ENTRY       pTransHead;
+    PTDNF_TRANS_ENTRY       pTransTail;
 } TDNFRPMTS, *PTDNFRPMTS;
 
 typedef struct _TDNF_REPO_METADATA
