@@ -587,7 +587,7 @@ error:
 }
 
 uint32_t
-PrintExisting AghExistingPackagesSkipped(
+PrintExistingPackagesSkipped(
     PTDNF_PKG_INFO pPkgInfos
     )
 {
