@@ -534,6 +534,11 @@ TDNFFetchRemoteGPGKey(
     char** ppszKeyLocation
     )
 {
+    /*
+     * Retrieve a remote GPG key.  The transfer is performed in a
+     * synchronous manner irrespective of the parallelDownloads
+     * configuration because only packages benefit from concurrency.
+     */
     uint32_t dwError = 0;
     char* pszFilePath = NULL;
     char* pszNormalPath = NULL;
