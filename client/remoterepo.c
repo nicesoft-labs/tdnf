@@ -8,6 +8,8 @@
 
 #include "includes.h"
 #include <pthread.h>
+#include <signal.h>
+
 
 typedef struct _PROGRESS_STATE
 {
@@ -23,6 +25,23 @@ static PPROGRESS_STATE g_pProgressStates = NULL;
 static int g_nProgressStates = 0;
 static pthread_mutex_t g_progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 static __thread int g_tls_progress_index = -1;
+static struct sigaction g_orig_sigint;
+
+static void
+progress_sigint_handler(int sig)
+{
+    UNUSED(sig);
+    pthread_mutex_lock(&g_progress_mutex);
+    if (g_pProgressStates)
+    {
+        for (int i = 0; i < g_nProgressStates + 1; i++)
+            printf("\n");
+        fflush(stdout);
+    }
+    pthread_mutex_unlock(&g_progress_mutex);
+    sigaction(SIGINT, &g_orig_sigint, NULL);
+    raise(SIGINT);
+}
 
 static void
 _redraw_progress_locked()
@@ -30,12 +49,15 @@ _redraw_progress_locked()
     if(!g_pProgressStates)
         return;
 
+    int active_count = 0;
+
     for(int i = 0; i < g_nProgressStates; i++)
     {
         PROGRESS_STATE *st = &g_pProgressStates[i];
         printf("\033[2K");
         if(st->active)
         {
+            active_count++;
             int percent = 0;
             if(st->dlTotal > 0)
             {
@@ -55,7 +77,11 @@ _redraw_progress_locked()
             printf("\n");
         }
     }
-    printf("\033[%dA", g_nProgressStates);
+
+    if(active_count > 0)
+    {
+        printf("\033[%dA", g_nProgressStates);
+    }
     fflush(stdout);
 }
 
@@ -315,7 +341,6 @@ TDNFDownloadFile(
             g_pProgressStates[g_tls_progress_index].active = 0;
             _redraw_progress_locked();
             pr_info("%s completed\n", pszProgressData);
-            printf("\033[1A");
         }
         pthread_mutex_unlock(&g_progress_mutex);
     }
@@ -758,6 +783,13 @@ TDNFPreDownloadPackages(
         goto cleanup;
     }
 
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = progress_sigint_handler;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGINT, &sa, &g_orig_sigint);
+
+    
     if (isatty(STDOUT_FILENO) && !pTdnf->pArgs->nQuiet)
     {
         for(int i = 0; i < count; i++)
@@ -806,6 +838,7 @@ cleanup:
     free(g_pProgressStates);
     g_pProgressStates = NULL;
     g_nProgressStates = 0;
+    sigaction(SIGINT, &g_orig_sigint, NULL);
     return dwError;
 error:
     goto cleanup;
