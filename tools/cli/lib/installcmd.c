@@ -21,11 +21,16 @@
 
 #include "includes.h"
 
-#define COLOR_BLUE "\033[1;34m"
-#define COLOR_RED "\033[1;31m"
-#define COLOR_RESET "\033[0m"
-#define BOLD "\033[1m\033[30m"
-#define RESET "\033[0m"
+#include "tdnf-common-defines.h"
+
+#ifndef TEXT_BOLD
+#define TEXT_BOLD "\033[1m\033[30m"
+#endif
+#ifndef TEXT_RESET
+#define TEXT_RESET "\033[0m"
+#endif
+#define BOLD TEXT_BOLD
+#define RESET TEXT_RESET
 
 uint32_t
 TDNFCliInstallCommand(
@@ -689,7 +694,7 @@ PrintAction(
     // Динамическое выделение памяти для данных таблицы
     char **ppszTableData = calloc(nRowCount * COL_COUNT, sizeof(char *));
     if (!ppszTableData) {
-        dwError = ERROR_TDNF_NO_MEMORY;
+        dwError = ERROR_TDNF_OUT_OF_MEMORY;
         BAIL_ON_CLI_ERROR(dwError);
     }
 
@@ -726,7 +731,7 @@ PrintAction(
         for (int col = 0; col < COL_COUNT; col++) {
             ppszTableData[row * COL_COUNT + col] = strdup(ppszInfoToPrint[col]);
             if (!ppszTableData[row * COL_COUNT + col]) {
-                dwError = ERROR_TDNF_NO_MEMORY;
+                dwError = ERROR_TDNF_OUT_OF_MEMORY;
                 BAIL_ON_CLI_ERROR(dwError);
             }
 
