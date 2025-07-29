@@ -202,6 +202,12 @@ TDNFRecursivelyRemoveDir(
 );
 
 uint32_t
+TDNFGetDirSizeBytes(
+    const char *pszPath,
+    uint64_t *pqwSize
+    );
+
+uint32_t
 TDNFStringMatchesOneOf(
     const char *pszSearch,
     char **ppszList,
