@@ -189,6 +189,11 @@ TDNFDownloadFileFromRepo(
     const char *pszProgressData
 )
 {
+    /*
+     * Fetch a single file from the specified repository.  Downloads are
+     * always executed sequentially; this helper is used for metadata
+     * as well as packages and must not honour parallelDownloads.
+     */
     uint32_t dwError = 0;
     char *pszUrl = NULL;
     pr_info("DownloadFileFromRepo: repo '%s' location '%s' dest '%s'\n",
@@ -254,6 +259,12 @@ TDNFDownloadFile(
     const char *pszProgressData
     )
 {
+    /*
+     * Core download helper performing a single CURL transfer.  The
+     * implementation is synchronous and does not utilise the
+     * parallelDownloads setting.  Higher level routines manage any
+     * concurrency.
+     */
     uint32_t dwError = 0;
     CURL *pCurl = NULL;
     FILE *fp = NULL;
@@ -810,6 +821,12 @@ TDNFPreDownloadPackages(
     PTDNF_PKG_INFO pInfos
     )
 {
+    /*
+     * Pre-download packages to cache or a user supplied directory.
+     * Parallel downloads are only enabled for RPM files.  Any other
+     * file is downloaded sequentially to avoid concurrent metadata
+     * transfers.
+     */
     uint32_t dwError = 0;
     int count = 0, idx = 0, running = 0;
     PTDNF_PKG_INFO p = NULL;
@@ -860,13 +877,33 @@ TDNFPreDownloadPackages(
         BAIL_ON_TDNF_ERROR(dwError);
         tasks[idx].progress_index = idx;
 
-
-        pthread_create(&threads[idx], NULL, _download_task_fn, &tasks[idx]);
-        running++;
-        if (running >= nParallel)
+        int is_rpm = 0;
+        if (p->pszLocation)
         {
-            pthread_join(threads[idx - nParallel + 1], NULL);
-            running--;
+            size_t len = strlen(p->pszLocation);
+            if (len >= 4 && !strcasecmp(p->pszLocation + len - 4, ".rpm"))
+                is_rpm = 1;
+        }
+
+        if (!is_rpm)
+        {
+            while (running > 0)
+            {
+                pthread_join(threads[idx - running], NULL);
+                running--;
+            }
+            pthread_create(&threads[idx], NULL, _download_task_fn, &tasks[idx]);
+            pthread_join(threads[idx], NULL);
+        }
+        else
+        {
+            pthread_create(&threads[idx], NULL, _download_task_fn, &tasks[idx]);
+            running++;
+            if (running >= nParallel)
+            {
+                pthread_join(threads[idx - nParallel + 1], NULL);
+                running--;
+            }
         }
     }
 
