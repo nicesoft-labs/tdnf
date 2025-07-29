@@ -991,7 +991,19 @@ TDNFCliMakeCacheCommand(
     BAIL_ON_CLI_ERROR(dwError);
     
     uint64_t qwSize = 0;
-    const char *pszCacheDir = pContext->hTdnf->pConf->pszCacheDir;
+    typedef struct _TDNF_PRIVATE_ {
+        void* pSack;
+        PTDNF_CMD_ARGS pArgs;
+        PTDNF_CONF pConf;
+    } TDNF_PRIVATE, *PTDNF_PRIVATE;
+
+    PTDNF_PRIVATE pTdnf = (PTDNF_PRIVATE)pContext->hTdnf;
+    const char *pszCacheDir = NULL;
+
+    if (pTdnf && pTdnf->pConf)
+    {
+        pszCacheDir = pTdnf->pConf->pszCacheDir;
+    }
     if (pszCacheDir)
     {
         if (TDNFGetDirSizeBytes(pszCacheDir, &qwSize))
