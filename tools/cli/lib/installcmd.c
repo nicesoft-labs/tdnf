@@ -221,7 +221,7 @@ TDNFCliAskForAction(
         }
         if (pCmdArgs->nDownloadOnly)
         {
-            pr_info(COLOR_BLUE "tdnf будет только загружать пакеты, необходимые для транзакции\n" COLOR_RESET);
+            pr_info("tdnf будет только загружать пакеты, необходимые для транзакции\n");
         }
     }
 
@@ -229,7 +229,7 @@ TDNFCliAskForAction(
     {
         int nAnswer = 0;
 
-        dwError = TDNFYesOrNo(pCmdArgs, COLOR_BLUE "Это нормально? [y/N]: " COLOR_RESET, &nAnswer);
+        dwError = TDNFYesOrNo(pCmdArgs, "Это нормально? [y/N]: ", &nAnswer);
         BAIL_ON_CLI_ERROR(dwError);
 
         if(!nAnswer)
@@ -609,7 +609,7 @@ PrintExistingPackagesSkipped(
     while(pPkgInfo)
     {
         pr_info(
-            COLOR_BLUE "Пакет %s-%s-%s.%s уже установлен, пропускается.\n" COLOR_RESET,
+            "Пакет %s-%s-%s.%s уже установлен, пропускается.\n",
             pPkgInfo->pszName,
             pPkgInfo->pszVersion,
             pPkgInfo->pszRelease,
@@ -686,7 +686,7 @@ PrintAction(
     switch(nAlterType)
     {
         case ALTER_INSTALL:
-            pr_info("\n" COLOR_BLUE "Установка:" COLOR_RESET);
+            pr_info("\nУстановка:");
             break;
         case ALTER_UPGRADE:
             pr_info("\n" COLOR_BLUE "Обновление:" COLOR_RESET);
@@ -695,13 +695,13 @@ PrintAction(
             pr_info("\n" COLOR_RED "Удаление:" COLOR_RESET);
             break;
         case ALTER_DOWNGRADE:
-            pr_info("\n" COLOR_BLUE "Понижение версии:" COLOR_RESET);
+            pr_info("\nПонижение версии:");
             break;
         case ALTER_REINSTALL:
-            pr_info("\n" COLOR_BLUE "Переустановка:" COLOR_RESET);
+            pr_info("\nПереустановка:");
             break;
         case ALTER_OBSOLETED:
-            pr_info("\n" COLOR_BLUE "Устаревание:" COLOR_RESET);
+            pr_info("\nУстаревание:");
             break;
         default:
             dwError = ERROR_TDNF_INVALID_PARAMETER;
@@ -774,11 +774,11 @@ PrintAction(
 
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info(COLOR_BLUE "\nОбщий размер установки: %s\n" COLOR_RESET, pszTotalInstallSize);
+    pr_info("\nОбщий размер установки: %s\n", pszTotalInstallSize);
 
     dwError = TDNFUtilsFormatSize(nTotalDownloadSize, &pszTotalDownloadSize);
     BAIL_ON_TDNF_ERROR(dwError);
-    pr_info(COLOR_BLUE "Общий размер загрузки: %s\n" COLOR_RESET, pszTotalDownloadSize);
+    pr_info("Общий размер загрузки: %s\n", pszTotalDownloadSize);
 
 cleanup:
     TDNFFreeMemory(pszTotalInstallSize);
