@@ -51,11 +51,6 @@ _redraw_progress_locked()
 
     int active_count = 0;
 
-    /* Move cursor to the beginning of the progress block so the cursor
-     * stays below the list of packages being downloaded, similar to dnf
-     */
-    printf("\033[%dA", g_nProgressStates);
-
     for(int i = 0; i < g_nProgressStates; i++)
     {
         PROGRESS_STATE *st = &g_pProgressStates[i];
