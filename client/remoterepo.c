@@ -168,6 +168,14 @@ cleanup:
     return dwError;
 
 error:
+    if (dwError) {
+        char *pszErrFinal = NULL;
+        TDNFGetErrorString(dwError, &pszErrFinal);
+        if (pszErrFinal) {
+            pr_err("DownloadFileFromRepo final error: %s\n", pszErrFinal);
+        }
+        TDNF_SAFE_FREE_MEMORY(pszErrFinal);
+    }
     goto cleanup;
 }
 
@@ -183,6 +191,10 @@ TDNFDownloadFileFromRepo(
 {
     uint32_t dwError = 0;
     char *pszUrl = NULL;
+    pr_info("DownloadFileFromRepo: repo '%s' location '%s' dest '%s'\n",
+            pRepo && pRepo->pszId ? pRepo->pszId : "?",
+            pszLocation ? pszLocation : "?",
+            pszFile ? pszFile : "?");
 
     if(!pTdnf ||
        !pTdnf->pArgs || !pRepo ||
@@ -201,18 +213,27 @@ TDNFDownloadFileFromRepo(
          * 2) we could store a list of known bad/good URLs
          */
         for (int i = 0; pRepo->ppszBaseUrls[i]; i++) {
+            pr_info("Trying baseurl: %s\n", pRepo->ppszBaseUrls[i]);
             dwError = TDNFJoinPath(&pszUrl, pRepo->ppszBaseUrls[i], pszLocation, NULL);
             BAIL_ON_TDNF_ERROR(dwError);
 
             dwError = TDNFDownloadFile(pTdnf, pRepo, pszUrl, pszFile, pszProgressData);
             if (dwError == 0) {
                 break;
+            } else {
+                char *pszErr = NULL;
+                TDNFGetErrorString(dwError, &pszErr);
+                if (pszErr) {
+                    pr_err("Download from %s failed: %s\n", pszUrl, pszErr);
+                }
+                TDNF_SAFE_FREE_MEMORY(pszErr);
             }
             TDNF_SAFE_FREE_MEMORY(pszUrl);
         }
     } else {
         /* If there is no base url, pszLocation should contain the whole URL.
            This is the case for packages from the command line. */
+        pr_info("No baseurl defined, using URL: %s\n", pszLocation);
         dwError = TDNFDownloadFile(pTdnf, pRepo, pszLocation, pszFile, pszProgressData);
     }
     BAIL_ON_TDNF_ERROR(dwError);
@@ -253,6 +274,11 @@ TDNFDownloadFile(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+    pr_info("TDNFDownloadFile: repo '%s' url '%s' -> '%s'\n",
+            pRepo && pRepo->pszId ? pRepo->pszId : "?",
+            pszFileUrl ? pszFileUrl : "?",
+            pszFile ? pszFile : "?");
+    
     pCurl = curl_easy_init();
     if(!pCurl)
     {
@@ -326,6 +352,12 @@ TDNFDownloadFile(
             fp = NULL;
             break;
         }
+        else
+        {
+            const char *pszCurlErr = curl_easy_strerror(dwError);
+            pr_err("curl_easy_perform error (%d: %s) while downloading %s\n",
+                   dwError, pszCurlErr ? pszCurlErr : "?", pszFileUrl);
+        }
         if (i == pRepo->nRetries || TDNFCurlErrorIsFatal(dwError))
         {
             BAIL_ON_TDNF_CURL_ERROR(dwError);
@@ -350,6 +382,8 @@ TDNFDownloadFile(
                                 &lStatus);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
+    pr_info("HTTP status %ld for %s\n", lStatus, pszFileUrl);
+
     if(lStatus >= 400)
     {
         pr_err(
@@ -357,6 +391,7 @@ TDNFDownloadFile(
                 "or refresh metadata with 'tdnf makecache'.\n",
                 lStatus,
                 pszFileUrl);
+        pr_err("URL that failed: %s\n", pszFileUrl);
         dwError = ERROR_TDNF_INVALID_PARAMETER;
         BAIL_ON_TDNF_ERROR(dwError);
     }
@@ -367,10 +402,18 @@ TDNFDownloadFile(
             dwError = errno;
             BAIL_ON_TDNF_SYSTEM_ERROR(dwError);
         }
+        else
+        {
+            pr_info("Saved %s to %s\n", pszFileUrl, pszFile);
+        }
         if (chmod(pszFile, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1)
         {
             dwError = errno;
             BAIL_ON_TDNF_SYSTEM_ERROR(dwError);
+        }
+        else
+        {
+            pr_info("Set permissions for %s\n", pszFile);
         }
     }
 
@@ -397,6 +440,15 @@ error:
     if(!IsNullOrEmptyString(pszFileTmp))
     {
         unlink(pszFileTmp);
+    }
+
+    if (dwError) {
+        char *pszErrFinal = NULL;
+        TDNFGetErrorString(dwError, &pszErrFinal);
+        if (pszErrFinal) {
+            pr_err("TDNFDownloadFile final error: %s\n", pszErrFinal);
+        }
+        TDNF_SAFE_FREE_MEMORY(pszErrFinal);
     }
 
     goto cleanup;
