@@ -977,6 +977,17 @@ TDNFGetCurlError(
     );
 
 uint32_t
+TDNFIsHttpStatusError(
+    uint32_t dwError
+    );
+
+uint32_t
+TDNFGetHttpStatus(
+    uint32_t dwError
+    );
+
+
+uint32_t
 TDNFIsFileOrSymlink(
     const char* pszPath,
     int* pnPathIsFile
