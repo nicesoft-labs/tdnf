@@ -358,7 +358,7 @@ TDNFCliInfoCommand(
 
         if(dwCount > 0)
         {
-            pr_crit("\nTotal Size: %s (%lu)\n", pszFormattedSize, dwTotalSize);
+            pr_crit("\nОбщий размер: %s (%lu)\n", pszFormattedSize, dwTotalSize);
         }
     }
 
