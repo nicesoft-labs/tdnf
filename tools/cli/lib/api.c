@@ -990,7 +990,7 @@ TDNFCliMakeCacheCommand(
     dwError = TDNFCliRefresh(pContext);
     BAIL_ON_CLI_ERROR(dwError);
 
-    pr_crit("Metadata cache created.\n");
+    pr_crit("Кэш метаданных создан.\n");
 
 cleanup:
     return dwError;
@@ -1033,11 +1033,11 @@ TDNFCliRefresh(
 
     if (dwError == ERROR_TDNF_SYSTEM_BASE + EACCES) {
         if (geteuid()) {
-            pr_err("\ntdnf repo cache needs to be refreshed but you have insufficient permissions\n"
-                   "You can use one of the below methods to workaround this\n"
-                   "1. Login as root and refresh cache\n"
-                   "2. Use -c (--config) with a configuration file that has 'cachedir' set to a directory where you have access\n"
-                   "3. Use -C (--cacheonly) and use the existing cache in the system\n\n");
+            pr_err("\nКэш репозиториев tdnf нуждается в обновлении, но у вас недостаточно прав\n"
+                   "Вы можете воспользоваться одним из следующих способов, чтобы обойти это:\n"
+                   "1. Войдите как root и обновите кэш\n"
+                   "2. Используйте -c (--config) с конфигурационным файлом, в котором параметр 'cachedir' указывает на директорию, к которой у вас есть доступ\n"
+                   "3. Используйте -C (--cacheonly) для работы с уже существующим кэшем в системе\n\n");
         }
     }
     return dwError;
@@ -1092,7 +1092,7 @@ TDNFCliHistoryAlter(
     {
         char *pszName = NULL;
         int i;
-        pr_crit("The following packages could not be resolved:\n\n");
+        pr_crit("Не удалось разрешить следующие пакеты:\n\n");
         for (i = 0, pszName = pSolvedPkgInfo->ppszPkgsNotResolved[0];
              pszName;
              i++, pszName = pSolvedPkgInfo->ppszPkgsNotResolved[i])
@@ -1100,9 +1100,10 @@ TDNFCliHistoryAlter(
             pr_crit("%s\n", pszName);
         }
         pr_crit("\n"
-                "The package(s) may have been moved out of the enabled repositories since the\n"
-                "last time they were installed. You may be able to resolve this by enabling\n"
-                "additional repositories.\n");
+                "Возможно, пакеты были удалены из включённых репозиториев с момента\n"
+                "последней установки. Вы можете попытаться решить эту проблему,\n"
+                "включив дополнительные репозитории.\n");
+
         dwError = ERROR_TDNF_NO_MATCH;
         BAIL_ON_CLI_ERROR(dwError);
     }
@@ -1328,7 +1329,7 @@ TDNFCliMarkCommand(
     }
     else
     {
-        pr_crit("need action ('install' or 'remove') as argument\n");
+        pr_crit("необходимо указать действие ('install' или 'remove') в качестве аргумента\n");
         dwError = ERROR_TDNF_INVALID_PARAMETER;
         BAIL_ON_CLI_ERROR(dwError);
     }
@@ -1340,7 +1341,7 @@ TDNFCliMarkCommand(
     }
     else
     {
-        pr_crit("need package spec(s) as argument\n");
+        pr_crit("необходимо указать спецификацию пакета(ов) в качестве аргумента\n");
         dwError = ERROR_TDNF_INVALID_PARAMETER;
         BAIL_ON_CLI_ERROR(dwError);
     }
