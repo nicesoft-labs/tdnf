@@ -989,11 +989,6 @@ TDNFCliMakeCacheCommand(
 
     dwError = TDNFCliRefresh(pContext);
     BAIL_ON_CLI_ERROR(dwError);
-
-    pr_crit("📦 Доступные пакеты:\n");
-    pr_crit(" - niceos-base: 1243\n");
-    pr_crit(" - niceos-updates: 890\n");
-    pr_crit(" - niceos-extras: 64\n");
     
     uint64_t qwSize = 0;
     const char *pszCacheDir = pContext->hTdnf->pConf->pszCacheDir;
