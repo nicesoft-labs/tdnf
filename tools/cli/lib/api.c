@@ -990,7 +990,7 @@ TDNFCliMakeCacheCommand(
     dwError = TDNFCliRefresh(pContext);
     BAIL_ON_CLI_ERROR(dwError);
 
-    pr_crit("Кэш метаданных создан.\n");
+    pr_crit("✅ Кэш метаданных создан.\n");
 
 cleanup:
     return dwError;
