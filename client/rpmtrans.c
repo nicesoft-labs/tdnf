@@ -1149,7 +1149,7 @@ TDNFFreeTransEntries(
 static void
 TDNFPrintTransHeader()
 {
-    printf(COLOR_YELLOW "%-40s %-20s %-10s" COLOR_RESET "\n", "Название", "Версия", "Действие");
+    printf("%-40s %-30s %-10s\n", "Название", "Версия", "Действие");
 }
 
 static void
@@ -1168,7 +1168,6 @@ TDNFPrintTransTable(
     {
         char *pszName = NULL;
         char *pszVersion = NULL;
-        const char *pszColor = NULL;
         const char *pszAction = NULL;
 
         const char *dash = strchr(pEntry->pszNevra, '-');
@@ -1185,25 +1184,20 @@ TDNFPrintTransTable(
         switch(pEntry->nAction)
         {
             case TDNF_TRANS_ACTION_REMOVE:
-                pszColor = COLOR_RED;
                 pszAction = "Удаление";
                 break;
             case TDNF_TRANS_ACTION_REINSTALL:
-                pszColor = COLOR_BLUE;
                 pszAction = "Переустановка";
                 break;
             default:
-                pszColor = COLOR_BLUE;
                 pszAction = "Установка";
                 break;
         }
 
-        printf("%-40s %-20s %s%s%s\n",
+        printf("%-40s %-30s %s\n",
                pszName ? pszName : "",
                pszVersion ? pszVersion : "",
-               pszColor,
-               pszAction,
-               COLOR_RESET);
+               pszAction);
 
         TDNF_SAFE_FREE_MEMORY(pszName);
         TDNF_SAFE_FREE_MEMORY(pszVersion);
