@@ -255,6 +255,7 @@ typedef enum
     {ERROR_TDNF_BASEURL_DOES_NOT_EXISTS, "ERROR_TDNF_BASEURL_DOES_NOT_EXISTS", "Base URL и Metalink URL не найдены в файле репозитория"}, \
     {ERROR_TDNF_CHECKSUM_VALIDATION_FAILED, "ERROR_TDNF_CHECKSUM_VALIDATION_FAILED", "Не удалось проверить контрольную сумму для repomd.xml, загруженного по URL из metalink"}, \
     {ERROR_TDNF_METALINK_RESOURCE_VALIDATION_FAILED, "ERROR_TDNF_METALINK_RESOURCE_VALIDATION_FAILED", "В файле metalink отсутствует ресурс для загрузки файла"}, \
+    {ERROR_TDNF_HTTP_STATUS, "ERROR_TDNF_HTTP_STATUS", "HTTP запрос вернул ошибочный статус"}, \
     {ERROR_TDNF_FIPS_MODE_FORBIDDEN, "ERROR_TDNF_FIPS_MODE_FORBIDDEN", "Вызов API дайджеста запрещен в режиме FIPS!"}, \
     {ERROR_TDNF_CURLE_UNSUPPORTED_PROTOCOL, "ERROR_TDNF_CURLE_UNSUPPORTED_PROTOCOL", "Curl не поддерживает этот протокол"}, \
     {ERROR_TDNF_CURLE_FAILED_INIT,   "ERROR_TDNF_CURLE_FAILED_INIT",   "Ошибка инициализации Curl"}, \
