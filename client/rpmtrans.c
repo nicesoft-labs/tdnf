@@ -710,7 +710,7 @@ TDNFRunTransaction(
     }
 
     //TODO do callbacks for output
-    pr_info("Testing transaction\n");
+    pr_info("Проверка транзакции\n");
 
     if (pTdnf->pArgs->nNoGPGCheck)
     {
@@ -746,7 +746,7 @@ TDNFRunTransaction(
             dwError = TDNFSetOpenMax(pTdnf);
             BAIL_ON_TDNF_ERROR(dwError);
         }
-        pr_info("Running transaction\n");
+        pr_info("Запуск транзакции\n");
 	    
         TDNFPrintTransHeader();
 
