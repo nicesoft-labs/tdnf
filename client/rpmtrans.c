@@ -1149,7 +1149,7 @@ TDNFFreeTransEntries(
 static void
 TDNFPrintTransHeader()
 {
-    printf(COLOR_YELLOW "%-40s %-20s %-10s" COLOR_RESET "\n", "Name", "Version", "Action");
+    printf(COLOR_YELLOW "%-40s %-20s %-10s" COLOR_RESET "\n", "Название", "Версия", "Действие");
 }
 
 static void
@@ -1186,15 +1186,15 @@ TDNFPrintTransTable(
         {
             case TDNF_TRANS_ACTION_REMOVE:
                 pszColor = COLOR_RED;
-                pszAction = "Remove";
+                pszAction = "Удаление";
                 break;
             case TDNF_TRANS_ACTION_REINSTALL:
                 pszColor = COLOR_BLUE;
-                pszAction = "Reinstall";
+                pszAction = "Переустановка";
                 break;
             default:
                 pszColor = COLOR_BLUE;
-                pszAction = "Install";
+                pszAction = "Установка";
                 break;
         }
 
