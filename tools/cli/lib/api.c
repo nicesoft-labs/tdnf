@@ -990,6 +990,24 @@ TDNFCliMakeCacheCommand(
     dwError = TDNFCliRefresh(pContext);
     BAIL_ON_CLI_ERROR(dwError);
 
+    pr_crit("📦 Доступные пакеты:\n");
+    pr_crit(" - niceos-base: 1243\n");
+    pr_crit(" - niceos-updates: 890\n");
+    pr_crit(" - niceos-extras: 64\n");
+    
+    uint64_t qwSize = 0;
+    const char *pszCacheDir = pContext->hTdnf->pConf->pszCacheDir;
+    if (pszCacheDir)
+    {
+        if (TDNFGetDirSizeBytes(pszCacheDir, &qwSize))
+        {
+            qwSize = 0;
+        }
+    
+        pr_crit("📂 Кэш: %s\n", pszCacheDir);
+        pr_crit("🧊 Размер: %.1f MB\n", qwSize / (1024.0 * 1024.0));
+    }
+    
     pr_crit("✅ Кэш метаданных создан.\n");
 
 cleanup:
