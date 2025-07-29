@@ -761,6 +761,50 @@ error:
     goto cleanup;
 }
 
+static uint64_t _dir_size_total = 0;
+static int _calc_dir_size(const char *path, const struct stat *sbuf, int type, struct FTW *ftwb)
+{
+    UNUSED(path);
+    UNUSED(ftwb);
+    if ((type == FTW_F || type == FTW_SL) && sbuf)
+    {
+        _dir_size_total += sbuf->st_size;
+    }
+    return 0;
+}
+
+uint32_t
+TDNFGetDirSizeBytes(
+    const char *pszPath,
+    uint64_t *pqwSize
+    )
+{
+    uint32_t dwError = 0;
+
+    if (IsNullOrEmptyString(pszPath) || !pqwSize)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    _dir_size_total = 0;
+    if (nftw(pszPath, _calc_dir_size, 10, FTW_PHYS) < 0)
+    {
+        dwError = errno;
+        BAIL_ON_TDNF_SYSTEM_ERROR(dwError);
+    }
+
+    *pqwSize = _dir_size_total;
+cleanup:
+    return dwError;
+error:
+    if (pqwSize)
+    {
+        *pqwSize = 0;
+    }
+    goto cleanup;
+}
+
 /* search pszSearch in the string ppszList, result will be in pRet */
 uint32_t
 TDNFStringMatchesOneOf(const char *pszSearch, char **ppszList, int *pRet)
