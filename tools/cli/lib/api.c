@@ -437,10 +437,12 @@ TDNFCliRepoListCommand(
         for(pRepo = pRepoList; pRepo; pRepo = pRepo->pNext)
         {
             pr_crit(
-                "%-19s %-40s %-9s\n",
+                "%-19s %-40s %s%-9s%s\n",
                 pRepo->pszId,
                 pRepo->pszName,
-                pRepo->nEnabled ? "enabled" : "disabled");
+                pRepo->nEnabled ? COLOR_GREEN : COLOR_BOLD_RED,
+                pRepo->nEnabled ? "enabled" : "disabled",
+                COLOR_RESET);
         }
     }
 
