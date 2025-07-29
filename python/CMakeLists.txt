@@ -6,8 +6,8 @@
 # of the License are located in the COPYING file of this distribution.
 #
 
-find_package(PythonInterp 3.12 REQUIRED)
-find_package(PythonLibs 3.12 REQUIRED)
+find_package(PythonInterp 3.7 REQUIRED)
+find_package(PythonLibs 3.7 REQUIRED)
 
 set(PYTDNF_PACKAGE_NAME "${PROJECT_NAME}")
 set(PYTDNF_VERSION "${PROJECT_VERSION}")
