@@ -144,14 +144,17 @@ set_progress_cb(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
+    if(g_tls_progress_index < 0 ||
+       g_tls_progress_index >= g_nProgressStates ||
+       !g_pProgressStates)
+    {
+        /* progress infrastructure not initialized, silently succeed */
+        return 0;
+    }
+
     dwError = curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, progress_cb);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
-    if(g_tls_progress_index < 0 || g_tls_progress_index >= g_nProgressStates)
-    {
-        dwError = ERROR_TDNF_INVALID_PARAMETER;
-        BAIL_ON_TDNF_ERROR(dwError);
-    }
 
     pState = &g_pProgressStates[g_tls_progress_index];
     memset(pState, 0, sizeof(PROGRESS_STATE));
@@ -326,8 +329,12 @@ TDNFDownloadFile(
 
     if (!pTdnf->pArgs->nQuiet && pszProgressData != NULL)
     {
-        //print progress only if tty or verbose is specified.
-        if (isatty(STDOUT_FILENO) || pTdnf->pArgs->nVerbose)
+        /* print progress only if tty or verbose is specified and
+         * multi-download progress infrastructure is active */
+        if ((isatty(STDOUT_FILENO) || pTdnf->pArgs->nVerbose) &&
+            g_tls_progress_index >= 0 &&
+            g_tls_progress_index < g_nProgressStates &&
+            g_pProgressStates)
         {
             dwError = set_progress_cb(pCurl, pszProgressData);
             BAIL_ON_TDNF_ERROR(dwError);
