@@ -398,12 +398,12 @@ TDNFDownloadFile(
     if(lStatus >= 400)
     {
         pr_err(
-                "Error: %ld when downloading %s\n. Please check repo url "
+                "Error: HTTP status %ld when downloading %s\n. Please check repo url "
                 "or refresh metadata with 'tdnf makecache'.\n",
                 lStatus,
                 pszFileUrl);
         pr_err("URL that failed: %s\n", pszFileUrl);
-        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        dwError = ERROR_TDNF_HTTP_STATUS + lStatus;
         BAIL_ON_TDNF_ERROR(dwError);
     }
     else
