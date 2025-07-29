@@ -650,7 +650,7 @@ TDNFGetRepoMD(
     /* download repomd.xml to tmp */
     if (nNeedDownload && !pTdnf->pArgs->nCacheOnly)
     {
-        pr_info("Refreshing metadata for: '%s'\n", pRepoData->pszName);
+        pr_info("Обновление метаданных для: '%s'\n", pRepoData->pszName);
         /* always download to tmp */
         dwError = TDNFGetCachePath(pTdnf, pRepoData,
                                    "tmp", NULL,
