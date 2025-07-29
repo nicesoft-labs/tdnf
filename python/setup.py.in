@@ -6,8 +6,7 @@
 # of the License are located in the COPYING file of this distribution.
 #
 
-from setuptools import setup
-from distutils.core import Extension
+from setuptools import setup, Extension
 
 cflags = [
     '-I@PYTDNF_INC_DIR@',
