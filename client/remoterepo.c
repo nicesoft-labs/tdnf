@@ -199,10 +199,13 @@ TDNFDownloadFileFromRepo(
      */
     uint32_t dwError = 0;
     char *pszUrl = NULL;
-    pr_info("DownloadFileFromRepo: repo '%s' location '%s' dest '%s'\n",
-            pRepo && pRepo->pszId ? pRepo->pszId : "?",
-            pszLocation ? pszLocation : "?",
-            pszFile ? pszFile : "?");
+    if (pTdnf->pArgs->nVerbose)
+    {
+        pr_info("DownloadFileFromRepo: repo '%s' location '%s' dest '%s'\n",
+                pRepo && pRepo->pszId ? pRepo->pszId : "?",
+                pszLocation ? pszLocation : "?",
+                pszFile ? pszFile : "?");
+    }
 
     if(!pTdnf ||
        !pTdnf->pArgs || !pRepo ||
@@ -221,7 +224,10 @@ TDNFDownloadFileFromRepo(
          * 2) we could store a list of known bad/good URLs
          */
         for (int i = 0; pRepo->ppszBaseUrls[i]; i++) {
-            pr_info("Trying baseurl: %s\n", pRepo->ppszBaseUrls[i]);
+            if (pTdnf->pArgs->nVerbose)
+            {
+                pr_info("Trying baseurl: %s\n", pRepo->ppszBaseUrls[i]);
+            }
             dwError = TDNFJoinPath(&pszUrl, pRepo->ppszBaseUrls[i], pszLocation, NULL);
             BAIL_ON_TDNF_ERROR(dwError);
 
@@ -241,7 +247,10 @@ TDNFDownloadFileFromRepo(
     } else {
         /* If there is no base url, pszLocation should contain the whole URL.
            This is the case for packages from the command line. */
-        pr_info("No baseurl defined, using URL: %s\n", pszLocation);
+        if (pTdnf->pArgs->nVerbose)
+        {
+            pr_info("No baseurl defined, using URL: %s\n", pszLocation);
+        }
         dwError = TDNFDownloadFile(pTdnf, pRepo, pszLocation, pszFile, pszProgressData);
     }
     BAIL_ON_TDNF_ERROR(dwError);
@@ -288,10 +297,13 @@ TDNFDownloadFile(
         BAIL_ON_TDNF_ERROR(dwError);
     }
 
-    pr_info("TDNFDownloadFile: repo '%s' url '%s' -> '%s'\n",
-            pRepo && pRepo->pszId ? pRepo->pszId : "?",
-            pszFileUrl ? pszFileUrl : "?",
-            pszFile ? pszFile : "?");
+    if (pTdnf->pArgs->nVerbose)
+    {
+        pr_info("TDNFDownloadFile: repo '%s' url '%s' -> '%s'\n",
+                pRepo && pRepo->pszId ? pRepo->pszId : "?",
+                pszFileUrl ? pszFileUrl : "?",
+                pszFile ? pszFile : "?");
+    }
     
     pCurl = curl_easy_init();
     if(!pCurl)
@@ -359,7 +371,7 @@ TDNFDownloadFile(
         dwError = curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, fp);
         BAIL_ON_TDNF_CURL_ERROR(dwError);
 
-        if (i > 0)
+        if (i > 0 && pTdnf->pArgs->nVerbose)
         {
             pr_info("retrying %d/%d\n", i, pRepo->nRetries);
         }
@@ -390,7 +402,10 @@ TDNFDownloadFile(
         {
             g_pProgressStates[g_tls_progress_index].active = 0;
             _redraw_progress_locked();
-            pr_info("%s completed\n", pszProgressData);
+            if (pTdnf->pArgs->nVerbose)
+            {
+                pr_info("%s completed\n", pszProgressData);
+            }
         }
         pthread_mutex_unlock(&g_progress_mutex);
     }
@@ -400,7 +415,10 @@ TDNFDownloadFile(
                                 &lStatus);
     BAIL_ON_TDNF_CURL_ERROR(dwError);
 
-    pr_info("HTTP status %ld for %s\n", lStatus, pszFileUrl);
+    if (pTdnf->pArgs->nVerbose)
+    {
+        pr_info("HTTP status %ld for %s\n", lStatus, pszFileUrl);
+    }
 
     if(lStatus >= 400)
     {
@@ -422,7 +440,10 @@ TDNFDownloadFile(
         }
         else
         {
-            pr_info("Saved %s to %s\n", pszFileUrl, pszFile);
+            if (pTdnf->pArgs->nVerbose)
+            {
+                pr_info("Saved %s to %s\n", pszFileUrl, pszFile);
+            }
         }
         if (chmod(pszFile, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1)
         {
@@ -431,7 +452,10 @@ TDNFDownloadFile(
         }
         else
         {
-            pr_info("Set permissions for %s\n", pszFile);
+            if (pTdnf->pArgs->nVerbose)
+            {
+                pr_info("Set permissions for %s\n", pszFile);
+            }
         }
     }
 
@@ -562,7 +586,10 @@ TDNFDownloadPackage(
     }
     else if(dwError == 0)
     {
-        pr_info("%s package already downloaded\n", pszPkgName);
+        if (pTdnf->pArgs->nVerbose)
+        {
+            pr_info("%s package already downloaded\n", pszPkgName);
+        }
     }
     BAIL_ON_TDNF_ERROR(dwError);
 
