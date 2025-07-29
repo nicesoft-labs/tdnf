@@ -1120,6 +1120,11 @@ TDNFDownloadMetadata(
     int nPrintOnly
     )
 {
+    /*
+     * Download repomd.xml and related metadata.  This function is
+     * intentionally sequential and does not leverage the
+     * parallelDownloads setting.
+     */
     uint32_t dwError = 0;
     char *pszRepoMDPath = NULL;
     char *pszRepoMDUrl = NULL;
@@ -1219,6 +1224,12 @@ TDNFDownloadRepoMDParts(
     int nPrintOnly
     )
 {
+    /*
+     * Download individual metadata files referenced from repomd.xml.
+     * This routine always runs sequentially regardless of the
+     * parallelDownloads configuration since metadata transfers are
+     * lightweight and serialized intentionally.
+     */
     uint32_t dwError = 0;
     Pool *pPool = NULL;
     Dataiterator di = {0};
