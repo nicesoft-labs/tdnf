@@ -669,156 +669,109 @@ PrintAction(
     char *pszEmptyString = "";
 
     #define COL_COUNT 6
-    // Имя | Архитектура | [Эпоха:]Версия-Релиз | Репозиторий | Размер установки | Размер загрузки
-    char *ppszHeaders[COL_COUNT] = {
-        "Имя",
-        "Архитектура",
-        "[Эпоха:]Версия-Релиз",
-        "Репозиторий",
-        "Размер установки",
-        "Размер загрузки"
-    };
+    //Имя | Архитектура | [Эпоха:]Версия-Релиз | Репозиторий | Размер установки | Размер загрузки
+    int nColPercents[COL_COUNT] = {20, 15, 20, 15, 10, 10};
     int nColWidths[COL_COUNT] = {0};
+
     #define MAX_COL_LEN 256
     char szEpochVersionRelease[MAX_COL_LEN] = {0};
-    char *ppszInfoToPrint[COL_COUNT] = {0};
+    char *ppszInfoToPrint[MAX_COL_LEN] = {0};
 
-    // Подсчет строк
-    int nRowCount = 0;
-    PTDNF_PKG_INFO pTemp = pPkgInfos;
-    while (pTemp) {
-        nRowCount++;
-        pTemp = pTemp->pNext;
-    }
-
-    // Динамическое выделение памяти для данных таблицы
-    char **ppszTableData = calloc(nRowCount * COL_COUNT, sizeof(char *));
-    if (!ppszTableData) {
-        dwError = ERROR_TDNF_OUT_OF_MEMORY;
+    if(!pPkgInfos)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
         BAIL_ON_CLI_ERROR(dwError);
     }
 
-    // Заполнение данных и вычисление ширины столбцов
-    int row = 0;
-    for (pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext, row++) {
-        nTotalInstallSize += pPkgInfo->dwInstallSizeBytes;
-        nTotalDownloadSize += pPkgInfo->dwDownloadSizeBytes;
-
-        memset(szEpochVersionRelease, 0, MAX_COL_LEN);
-        if (pPkgInfo->dwEpoch) {
-            if (snprintf(szEpochVersionRelease, MAX_COL_LEN, "%u:%s-%s",
-                         (unsigned)pPkgInfo->dwEpoch, pPkgInfo->pszVersion,
-                         pPkgInfo->pszRelease) < 0) {
-                dwError = errno;
-                BAIL_ON_CLI_ERROR(dwError);
-            }
-        } else {
-            if (snprintf(szEpochVersionRelease, MAX_COL_LEN, "%s-%s",
-                         pPkgInfo->pszVersion, pPkgInfo->pszRelease) < 0) {
-                dwError = errno;
-                BAIL_ON_CLI_ERROR(dwError);
-            }
-        }
-
-        ppszInfoToPrint[0] = pPkgInfo->pszName ? pPkgInfo->pszName : pszEmptyString;
-        ppszInfoToPrint[1] = pPkgInfo->pszArch ? pPkgInfo->pszArch : pszEmptyString;
-        ppszInfoToPrint[2] = szEpochVersionRelease;
-        ppszInfoToPrint[3] = pPkgInfo->pszRepoName ? pPkgInfo->pszRepoName : pszEmptyString;
-        ppszInfoToPrint[4] = pPkgInfo->pszFormattedSize ? pPkgInfo->pszFormattedSize : pszEmptyString;
-        ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize ? pPkgInfo->pszFormattedDownloadSize : pszEmptyString;
-
-        // Сохранение данных и обновление ширины столбцов
-        for (int col = 0; col < COL_COUNT; col++) {
-            ppszTableData[row * COL_COUNT + col] = strdup(ppszInfoToPrint[col]);
-            if (!ppszTableData[row * COL_COUNT + col]) {
-                dwError = ERROR_TDNF_OUT_OF_MEMORY;
-                BAIL_ON_CLI_ERROR(dwError);
-            }
-
-            int len = strlen(ppszInfoToPrint[col]);
-            if (len > nColWidths[col]) {
-                nColWidths[col] = len;
-            }
-            len = strlen(ppszHeaders[col]);
-            if (len > nColWidths[col]) {
-                nColWidths[col] = len;
-            }
-        }
-    }
-
-    // Добавление отступов (2 пробела с каждой стороны)
-    for (int i = 0; i < COL_COUNT; i++) {
-        nColWidths[i] += 4; // 2 пробела слева + 2 справа
-    }
-
-    // Вывод заголовка действия
-    switch (nAlterType) {
+    switch(nAlterType)
+    {
         case ALTER_INSTALL:
-            pr_info("\n" COLOR_BLUE "Установка:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_BLUE "Установка:" COLOR_RESET);
             break;
         case ALTER_UPGRADE:
-            pr_info("\n" COLOR_BLUE "Обновление:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_BLUE "Обновление:" COLOR_RESET);
             break;
         case ALTER_ERASE:
-            pr_info("\n" COLOR_RED "Удаление:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_RED "Удаление:" COLOR_RESET);
             break;
         case ALTER_DOWNGRADE:
-            pr_info("\n" COLOR_BLUE "Понижение версии:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_BLUE "Понижение версии:" COLOR_RESET);
             break;
         case ALTER_REINSTALL:
-            pr_info("\n" COLOR_BLUE "Переустановка:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_BLUE "Переустановка:" COLOR_RESET);
             break;
         case ALTER_OBSOLETED:
-            pr_info("\n" COLOR_BLUE "Устаревание:" COLOR_RESET "\n");
+            pr_info("\n" COLOR_BLUE "Устаревание:" COLOR_RESET);
             break;
         default:
             dwError = ERROR_TDNF_INVALID_PARAMETER;
             BAIL_ON_CLI_ERROR(dwError);
     }
+    pr_info("\n");
 
-    // Вывод верхней границы таблицы
-    pr_info(COLOR_BLUE "+");
-    for (int i = 0; i < COL_COUNT; i++) {
-        for (int j = 0; j < nColWidths[i]; j++) pr_info("-");
-        if (i < COL_COUNT - 1) pr_info("+");
-    }
-    pr_info("+" COLOR_RESET "\n");
+    dwError = GetColumnWidths(COL_COUNT, nColPercents, nColWidths);
+    BAIL_ON_CLI_ERROR(dwError);
 
-    // Вывод заголовков
-    pr_info(COLOR_BLUE "|");
-    for (int i = 0; i < COL_COUNT; i++) {
-        pr_info(" %-*s ", nColWidths[i] - 2, ppszHeaders[i]);
-        if (i < COL_COUNT - 1) pr_info("|");
-    }
-    pr_info("|" COLOR_RESET "\n");
-
-    // Вывод разделителя
-    pr_info(COLOR_BLUE "+");
-    for (int i = 0; i < COL_COUNT; i++) {
-        for (int j = 0; j < nColWidths[i]; j++) pr_info("-");
-        if (i < COL_COUNT - 1) pr_info("+");
-    }
-    pr_info("+" COLOR_RESET "\n");
-
-    // Вывод строк данных
-    for (int r = 0; r < nRowCount; r++) {
-        pr_info("|");
-        for (int c = 0; c < COL_COUNT; c++) {
-            pr_info(" %-*s ", nColWidths[c] - 2, ppszTableData[r * COL_COUNT + c]);
-            if (c < COL_COUNT - 1) pr_info("|");
+    for(pPkgInfo = pPkgInfos; pPkgInfo; pPkgInfo = pPkgInfo->pNext)
+    {
+        nTotalInstallSize += pPkgInfo->dwInstallSizeBytes;
+        nTotalDownloadSize += pPkgInfo->dwDownloadSizeBytes;
+        memset(szEpochVersionRelease, 0, MAX_COL_LEN);
+        if(pPkgInfo->dwEpoch)
+        {
+            if(snprintf(
+                szEpochVersionRelease,
+                MAX_COL_LEN,
+                "%u:%s-%s",
+                (unsigned)pPkgInfo->dwEpoch,
+                pPkgInfo->pszVersion,
+                pPkgInfo->pszRelease) < 0)
+            {
+                dwError = errno;
+                BAIL_ON_CLI_ERROR(dwError);
+            }
         }
-        pr_info("|\n");
+        else
+        {
+            if(snprintf(
+                szEpochVersionRelease,
+                MAX_COL_LEN,
+                "%s-%s",
+                pPkgInfo->pszVersion,
+                pPkgInfo->pszRelease) < 0)
+            {
+                dwError = errno;
+                BAIL_ON_CLI_ERROR(dwError);
+            }
+        }
+
+        ppszInfoToPrint[0] = pPkgInfo->pszName == NULL ?
+                                 pszEmptyString : pPkgInfo->pszName;
+        ppszInfoToPrint[1] = pPkgInfo->pszArch == NULL ?
+                                 pszEmptyString : pPkgInfo->pszArch;
+        ppszInfoToPrint[2] = szEpochVersionRelease;
+        ppszInfoToPrint[3] = pPkgInfo->pszRepoName == NULL ?
+                                 pszEmptyString : pPkgInfo->pszRepoName;
+        ppszInfoToPrint[4] = pPkgInfo->pszFormattedSize == NULL ?
+                                 pszEmptyString : pPkgInfo->pszFormattedSize;
+        ppszInfoToPrint[5] = pPkgInfo->pszFormattedDownloadSize == NULL ?
+                                 pszEmptyString : pPkgInfo->pszFormattedDownloadSize;
+        pr_info(
+            "%-*s %-*s %-*s %-*s %-*s %*s\n",
+            nColWidths[0],
+            ppszInfoToPrint[0],
+            nColWidths[1],
+            ppszInfoToPrint[1],
+            nColWidths[2],
+            ppszInfoToPrint[2],
+            nColWidths[3],
+            ppszInfoToPrint[3],
+            nColWidths[4],
+            ppszInfoToPrint[4],
+            nColWidths[5],
+            ppszInfoToPrint[5]);
     }
 
-    // Вывод нижней границы таблицы
-    pr_info(COLOR_BLUE "+");
-    for (int i = 0; i < COL_COUNT; i++) {
-        for (int j = 0; j < nColWidths[i]; j++) pr_info("-");
-        if (i < COL_COUNT - 1) pr_info("+");
-    }
-    pr_info("+" COLOR_RESET "\n");
-
-    // Вывод общих размеров
     dwError = TDNFUtilsFormatSize(nTotalInstallSize, &pszTotalInstallSize);
     BAIL_ON_TDNF_ERROR(dwError);
     pr_info(COLOR_BLUE "\nОбщий размер установки: %s\n" COLOR_RESET, pszTotalInstallSize);
@@ -828,13 +781,6 @@ PrintAction(
     pr_info(COLOR_BLUE "Общий размер загрузки: %s\n" COLOR_RESET, pszTotalDownloadSize);
 
 cleanup:
-    // Освобождение памяти
-    if (ppszTableData) {
-        for (int i = 0; i < nRowCount * COL_COUNT; i++) {
-            TDNFFreeMemory(ppszTableData[i]);
-        }
-        TDNFFreeMemory(ppszTableData);
-    }
     TDNFFreeMemory(pszTotalInstallSize);
     TDNFFreeMemory(pszTotalDownloadSize);
     return dwError;
