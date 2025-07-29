@@ -123,17 +123,29 @@ error:
     }
     //If there is an error during init, log the error
     //remove any cache data that could be potentially corrupt.
-    if(pRepoData)
+    if (pRepoData)
     {
-        pr_err("Error: Failed to synchronize cache for repo '%s'\n",
-            pRepoData->pszName);
+        char *pszErrMsg = NULL;
 
-        if(pTdnf)
+        TDNFGetErrorString(dwError, &pszErrMsg);
+        if (!IsNullOrEmptyString(pszErrMsg))
+        {
+            pr_err("Error: Failed to synchronize cache for repo '%s': %s\n",
+                   pRepoData->pszName, pszErrMsg);
+        }
+        else
+        {
+            pr_err("Error: Failed to synchronize cache for repo '%s'\n",
+                   pRepoData->pszName);
+        }
+
+        if (pTdnf) 
         {
             TDNFRepoRemoveCache(pTdnf, pRepoData);
             TDNFRemoveSolvCache(pTdnf, pRepoData);
             TDNFRemoveLastRefreshMarker(pTdnf, pRepoData);
         }
+        TDNF_SAFE_FREE_MEMORY(pszErrMsg);
     }
     goto cleanup;
 }
