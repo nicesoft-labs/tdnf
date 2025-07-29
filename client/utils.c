@@ -73,6 +73,33 @@ TDNFGetErrorString(
         }
     }
 
+    //HTTP status error
+    if(!pszError && TDNFIsHttpStatusError(dwErrorCode))
+    {
+        uint32_t dwStatus = TDNFGetHttpStatus(dwErrorCode);
+        const char *pszBaseMsg = NULL;
+        for(uint32_t i = 0; i < nCount; i++)
+        {
+            if (arErrorDesc[i].nCode == ERROR_TDNF_HTTP_STATUS)
+            {
+                pszBaseMsg = arErrorDesc[i].pszDesc;
+                break;
+            }
+        }
+        char szBuf[128];
+        if (pszBaseMsg)
+        {
+            snprintf(szBuf, sizeof(szBuf), "%s: %u", pszBaseMsg, dwStatus);
+        }
+        else
+        {
+            snprintf(szBuf, sizeof(szBuf), "HTTP status %u", dwStatus);
+        }
+        dwError = TDNFAllocateString(szBuf, &pszError);
+        BAIL_ON_TDNF_ERROR(dwError);
+    }
+
+    
     //If the above attempts did not yield an error string,
     //do default unknown error.
     if(!pszError)
@@ -135,6 +162,28 @@ TDNFGetCurlError(
     }
     return dwCurlError;
 }
+
+uint32_t
+TDNFIsHttpStatusError(
+    uint32_t dwError
+    )
+{
+    return dwError >= ERROR_TDNF_HTTP_STATUS;
+}
+
+uint32_t
+TDNFGetHttpStatus(
+    uint32_t dwError
+    )
+{
+    uint32_t dwStatus = 0;
+    if(TDNFIsHttpStatusError(dwError))
+    {
+        dwStatus = dwError - ERROR_TDNF_HTTP_STATUS;
+    }
+    return dwStatus;
+}
+
 
 int
 TDNFIsGlob(
