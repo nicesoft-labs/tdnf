@@ -195,6 +195,10 @@ typedef enum
     {ERROR_TDNF_DISTROVERPKG_READ,   "ERROR_TDNF_DISTROVERPKG_READ",   "Ошибка чтения версии distroverpkg"}, \
     {ERROR_TDNF_INVALID_ALLOCSIZE,   "ERROR_TDNF_INVALID_ALLOCSIZE",   "Запрошено выделение памяти с недействительным размером"}, \
     {ERROR_TDNF_STRING_TOO_LONG,     "ERROR_TDNF_STRING_TOO_LONG",     "Запрошенный размер выделения строки слишком велик."}, \
+    {ERROR_TDNF_ALREADY_INSTALLED,   "ERROR_TDNF_ALREADY_INSTALLED",   "Пакет уже установлен"}, \
+    {ERROR_TDNF_NO_UPGRADE_PATH,     "ERROR_TDNF_NO_UPGRADE_PATH",     "Нет пути обновления"}, \
+    {ERROR_TDNF_NO_DOWNGRADE_PATH,   "ERROR_TDNF_NO_DOWNGRADE_PATH",   "Нет пути понижения"}, \
+    {ERROR_TDNF_ERASE_NEEDS_INSTALL, "ERROR_TDNF_ERASE_NEEDS_INSTALL", "Для удаления требуется установка"}, \
     {ERROR_TDNF_NO_ENABLED_REPOS,    "ERROR_TDNF_NO_ENABLED_REPOS",    "Нет включенных репозиториев.\n Выполните ""tdnf repolist all"", чтобы увидеть доступные репозитории.\n Вы можете включить репозитории:\n 1. Передав --enablerepo <имя_репозитория>\n 2. Отредактировав файлы репозитория в repodir (обычно /etc/yum.repos.d)"}, \
     {ERROR_TDNF_PACKAGELIST_EMPTY,   "ERROR_TDNF_PACKAGELIST_EMPTY",   "Список пакетов пуст"}, \
     {ERROR_TDNF_GOAL_CREATE,         "ERROR_TDNF_GOAL_CREATE",         "Ошибка создания цели"}, \
