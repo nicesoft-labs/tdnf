@@ -110,6 +110,10 @@ TDNFCheckPackages(
     pArgs->ppszCmds = ppszCheckCmds;
 
     dwError = TDNFResolve(pTdnf, ALTER_INSTALL, &pSolvedPkgInfo);
+    if(dwError == ERROR_TDNF_ALREADY_INSTALLED)
+    {
+        dwError = 0;
+    }
     BAIL_ON_TDNF_ERROR(dwError);
 
 cleanup:
