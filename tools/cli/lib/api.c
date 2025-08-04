@@ -746,12 +746,19 @@ TDNFCliProvidesCommand(
     {
         for(pPkg = pPkgInfos; pPkg; pPkg = pPkg->pNext)
         {
-            pr_crit("%s-%s.%s : %s\n",
+            char *pszSummary = NULL;
+
+            dwError = TDNFCliHighlightSummary(pPkg->pszSummary, pCmdArgs, &pszSummary);
+            BAIL_ON_CLI_ERROR(dwError);
+
+            pr_crit(COLOR_GREEN "%s" COLOR_RESET "-%s.%s : %s\n",
                 pPkg->pszName,
                 pPkg->pszEVR,
                 pPkg->pszArch,
-                pPkg->pszSummary);
+                pszSummary);
             pr_crit("Repo\t : %s\n", pPkg->pszRepoName);
+
+            TDNF_SAFE_FREE_MEMORY(pszSummary);
         }
     }
 cleanup:
