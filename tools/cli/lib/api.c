@@ -456,6 +456,129 @@ error:
     goto cleanup;
 }
 
+static
+uint32_t
+TDNFCliHighlightWord(
+    const char *pszSummary,
+    const char *pszWord,
+    char **ppszResult
+    )
+{
+    uint32_t dwError = 0;
+    size_t nSummaryLen = 0;
+    size_t nWordLen = 0;
+    size_t nPrefixLen = strlen(COLOR_BOLD_PURPLE);
+    size_t nResetLen = strlen(COLOR_RESET);
+    size_t nCount = 0;
+    const char *p = NULL;
+    const char *pszCursor = NULL;
+    char *pszOut = NULL;
+    char *pszTmp = NULL;
+
+    if (IsNullOrEmptyString(pszSummary) || IsNullOrEmptyString(pszWord) || !ppszResult)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_CLI_ERROR(dwError);
+    }
+
+    nSummaryLen = strlen(pszSummary);
+    nWordLen = strlen(pszWord);
+
+    pszCursor = pszSummary;
+    while ((p = strcasestr(pszCursor, pszWord)) != NULL)
+    {
+        nCount++;
+        pszCursor = p + nWordLen;
+    }
+
+    if (nCount == 0)
+    {
+        dwError = TDNFAllocateMemory(1, nSummaryLen + 1, (void**)&pszOut);
+        BAIL_ON_CLI_ERROR(dwError);
+        memcpy(pszOut, pszSummary, nSummaryLen + 1);
+        *ppszResult = pszOut;
+        goto cleanup;
+    }
+
+    dwError = TDNFAllocateMemory(1,
+                                 nSummaryLen + nCount * (nPrefixLen + nResetLen) + 1,
+                                 (void**)&pszOut);
+    BAIL_ON_CLI_ERROR(dwError);
+
+    pszCursor = pszSummary;
+    pszTmp = pszOut;
+    while ((p = strcasestr(pszCursor, pszWord)) != NULL)
+    {
+        size_t nSeg = p - pszCursor;
+        memcpy(pszTmp, pszCursor, nSeg);
+        pszTmp += nSeg;
+        memcpy(pszTmp, COLOR_BOLD_PURPLE, nPrefixLen);
+        pszTmp += nPrefixLen;
+        memcpy(pszTmp, p, nWordLen);
+        pszTmp += nWordLen;
+        memcpy(pszTmp, COLOR_RESET, nResetLen);
+        pszTmp += nResetLen;
+        pszCursor = p + nWordLen;
+    }
+    strcpy(pszTmp, pszCursor);
+    *ppszResult = pszOut;
+
+cleanup:
+    return dwError;
+
+error:
+    TDNF_SAFE_FREE_MEMORY(pszOut);
+    goto cleanup;
+}
+
+static
+uint32_t
+TDNFCliHighlightSummary(
+    const char *pszSummary,
+    PTDNF_CMD_ARGS pCmdArgs,
+    char **ppszResult
+    )
+{
+    uint32_t dwError = 0;
+    char *pszTmp = NULL;
+    char *pszOut = NULL;
+    uint32_t i = 0;
+
+    if (IsNullOrEmptyString(pszSummary) || !pCmdArgs || !ppszResult)
+    {
+        dwError = ERROR_TDNF_INVALID_PARAMETER;
+        BAIL_ON_CLI_ERROR(dwError);
+    }
+
+    dwError = TDNFAllocateMemory(1, strlen(pszSummary) + 1, (void**)&pszTmp);
+    BAIL_ON_CLI_ERROR(dwError);
+    strcpy(pszTmp, pszSummary);
+
+    for (i = 1; i < pCmdArgs->nCmdCount; ++i)
+    {
+        if (IsNullOrEmptyString(pCmdArgs->ppszCmds[i]))
+        {
+            continue;
+        }
+        dwError = TDNFCliHighlightWord(pszTmp, pCmdArgs->ppszCmds[i], &pszOut);
+        BAIL_ON_CLI_ERROR(dwError);
+        TDNF_SAFE_FREE_MEMORY(pszTmp);
+        pszTmp = pszOut;
+        pszOut = NULL;
+    }
+
+    *ppszResult = pszTmp;
+
+cleanup:
+    return dwError;
+
+error:
+    TDNF_SAFE_FREE_MEMORY(pszTmp);
+    TDNF_SAFE_FREE_MEMORY(pszOut);
+    goto cleanup;
+}
+
+
 uint32_t
 TDNFCliSearchCommand(
     PTDNF_CLI_CONTEXT pContext,
@@ -513,9 +636,13 @@ TDNFCliSearchCommand(
         for(dwIndex = 0; dwIndex < dwCount; ++dwIndex)
         {
             pPkg = &pPkgInfo[dwIndex];
+            char *pszSummary = NULL;
+            dwError = TDNFCliHighlightSummary(pPkg->pszSummary, pCmdArgs, &pszSummary);
+            BAIL_ON_CLI_ERROR(dwError);
             pr_crit(COLOR_GREEN "%s" COLOR_RESET " : %s\n",
                     pPkg->pszName,
-                    pPkg->pszSummary);
+                    pszSummary);
+            TDNF_SAFE_FREE_MEMORY(pszSummary);
         }
     }
 
