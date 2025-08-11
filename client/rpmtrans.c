@@ -1149,7 +1149,7 @@ TDNFFreeTransEntries(
 static void
 TDNFPrintTransHeader()
 {
-    printf("%-40s %-30s %-10s\n", "Название", "Версия", "Действие");
+    pr_info("%-40s %-30s %-10s\n", "Название", "Версия", "Действие");
 }
 
 static void
@@ -1194,7 +1194,7 @@ TDNFPrintTransTable(
                 break;
         }
 
-        printf("%-40s %-30s %s\n",
+        pr_info("%-40s %-30s %s\n",
                pszName ? pszName : "",
                pszVersion ? pszVersion : "",
                pszAction);
