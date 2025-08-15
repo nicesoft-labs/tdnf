@@ -92,7 +92,7 @@ class Tdnf:
             for directory in directories:
                 os.makedirs(directory, exist_ok=True)
 
-        cmd = ["tdnf"]
+        cmd = ["tdnf", "-y"]
         if self.releasever:
             cmd.extend(["--releasever", self.releasever])
         if self.reposdir:
@@ -133,7 +133,7 @@ class Tdnf:
                     "Docker image %s not found; falling back to host tdnf",
                     self.docker_image,
                 )
-            cmd = ["tdnf"]
+            cmd = ["tdnf", "-y"]
             if self.releasever:
                 cmd.extend(["--releasever", self.releasever])
             if self.reposdir:
