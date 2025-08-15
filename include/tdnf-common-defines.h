@@ -90,8 +90,11 @@
 #define pr_err(fmt, ...) \
     log_console(LOG_ERR, fmt, ##__VA_ARGS__)
 
-#define pr_json(str) \
-    fputs(str, stdout)
+#define pr_json(str)             \
+    do {                        \
+        fputs((str), stdout);   \
+        fputc('\n', stdout);   \
+    } while (0)
 
 #define pr_jsonf(fmt, ...) \
     fprintf(stdout, fmt, ##__VA_ARGS__)
