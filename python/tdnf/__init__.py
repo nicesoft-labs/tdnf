@@ -7,40 +7,52 @@
 #   Этот модуль предоставляет:
 #     - create_repo_conf(): совместима как с НОВОЙ сигнатурой (reposdir, name, baseurl, **options),
 #                           так и со СТАРОЙ (mapping, reposdir=...),
-#     - класс Tdnf: тонкая обёртка над CLI `tdnf` (с поддержкой Docker-режима),
-#                   повторяет поведение вашего варианта.
+#     - класс Tdnf: тонкая обёртка над CLI `tdnf` (с поддержкой Docker-режима).
 #
 #   Цель: «подогнать» поведение под isoBuilder.py / generate_initrd.py,
-#   чтобы не менять их логику и в то же время сохранять актуальный интерфейс.
+#   чтобы не менять их логику и при этом сохранить актуальный интерфейс.
 
-from tdnf._tdnf import *  # noqa: F401,F403 - оставляем как есть, если потребуются низкоуровневые биндинги
+from tdnf._tdnf import *  # noqa: F401,F403
 
 import os
 import subprocess
-from typing import Iterable, Optional, Sequence, Tuple, Dict, Any, Union
+from typing import Iterable, Optional, Sequence, Tuple, Dict, Any
 
 
-def _write_repo_file(reposdir: str, name: str, baseurl: str, **options: Any) -> str:
+def _write_repo_file(
+    reposdir: str,
+    section_name: str,
+    baseurl: str,
+    display_name: Optional[str] = None,
+    **options: Any,
+) -> str:
     """
     Вспомогательная функция: создаёт один *.repo файл.
+
     Параметры:
       - reposdir: каталог для записи *.repo
-      - name: имя секции и файла (name.repo)
+      - section_name: имя секции и файла (section_name.repo)
       - baseurl: значение baseurl=
+      - display_name: человекочитаемое имя (если None — берём section_name)
       - **options: остальные пары ключ=значение, попадают в файл как строки "key=value"
+
     Возвращает путь к созданному файлу.
     """
     os.makedirs(reposdir, exist_ok=True)
-    repo_path = os.path.join(reposdir, f"{name}.repo")
+    repo_path = os.path.join(reposdir, f"{section_name}.repo")
 
-    # "name=" в файле берём из options.name если задан, иначе используем секцию name
-    human_name = options.pop("name", name)
+    # enabled по умолчанию = 1, можно переопределить через options["enabled"]
+    enabled = options.pop("enabled", 1)
+
+    # Если display_name не задан — используем имя секции
+    if display_name is None:
+        display_name = section_name
 
     lines = [
-        f"[{name}]",
-        f"name={human_name}",
+        f"[{section_name}]",
+        f"name={display_name}",
         f"baseurl={baseurl}",
-        "enabled=1",
+        f"enabled={enabled}",
     ]
 
     for key, value in options.items():
@@ -56,26 +68,25 @@ def create_repo_conf(*args: Any, **kwargs: Any) -> str:
     """
     Совмещённая версия create_repo_conf — понимает два интерфейса:
 
-      1) НОВАЯ СИГНАТУРА (рекомендуется):
-         create_repo_conf(reposdir: str, name: str, baseurl: str, **options) -> str
+    1) НОВАЯ СИГНАТУРА (рекомендуется):
+       create_repo_conf(reposdir: str, name: str, baseurl: str, **options) -> str
+       где **options может содержать:
+           - name: человекочитаемое имя (пишется в поле 'name=' файла .repo)
+           - enabled, gpgcheck, skip_if_unavailable и т.п.
 
-      2) СТАРАЯ СИГНАТУРА (legacy, как в старом NiceOS-коде):
-         create_repo_conf(mapping: Dict[str, Dict[str, Any]], reposdir="/path") -> str
-         где mapping = { "repoName": {"baseurl": "...", "enabled": 1, "gpgcheck": 0, ...}, ... }
-         Возвращает путь к ПЕРВОМУ созданному .repo (строка).
-         Если в mapping несколько репозиториев — остальные тоже будут созданы.
-
-    ЗАМЕЧАНИЯ:
-      - В legacy-режиме "name" в файле .repo берётся из поля options["name"] если задан,
-        иначе совпадает с именем секции (ключом словаря).
-      - Возвращаем строку (путь к первому файлу), чтобы сохранить совместимость с вызывающим кодом,
-        который обычно не использует это значение.
+    2) СТАРАЯ СИГНАТУРА (legacy, как в старом NiceOS-коде):
+       create_repo_conf(mapping: Dict[str, Dict[str, Any]], reposdir="/path") -> str
+       где mapping = {
+         "repoName": {"baseurl": "...", "enabled": 1, "gpgcheck": 0, "name": "...", ...},
+         ...
+       }
+       Создаются все репозитории из mapping.
+       Возвращается путь к ПЕРВОМУ созданному .repo (строка).
     """
-    # Детектор старого интерфейса:
-    # первый позиционный аргумент — словарь, а в kwargs есть 'reposdir'
+    # --- Legacy-детектор: первый аргумент — dict, а reposdir передан (именованно или позиционно) ---
     if args and isinstance(args[0], dict) and ("reposdir" in kwargs or (len(args) >= 2 and isinstance(args[1], str))):
         mapping: Dict[str, Dict[str, Any]] = args[0]
-        # reposdir может прийти как именованный параметр (типичный случай) или вторым позиционным
+        # reposdir может прийти как именованный параметр или вторым позиционным
         reposdir: Optional[str] = kwargs.get("reposdir")
         if reposdir is None and len(args) >= 2 and isinstance(args[1], str):
             reposdir = args[1]
@@ -83,28 +94,31 @@ def create_repo_conf(*args: Any, **kwargs: Any) -> str:
             raise TypeError("legacy create_repo_conf: 'reposdir' must be provided (kwargs or positional)")
 
         first_path: Optional[str] = None
-        # Проходим по всем репозиториям из mapping
-        for repo_name, data in mapping.items():
-            if not isinstance(data, dict):
-                raise TypeError(f"legacy create_repo_conf: value for '{repo_name}' must be a dict")
-            if "baseurl" not in data:
-                raise TypeError(f"legacy create_repo_conf: repo '{repo_name}' is missing required 'baseurl'")
 
-            # Копируем словарь, чтобы не менять исходный
-            opts = dict(data)
-            baseurl = str(opts.pop("baseurl"))
-            # enabled по умолчанию 1 — но _write_repo_file уже пишет enabled=1,
-            # поэтому если в opts явно передали enabled, мы его добавим как есть (можно переопределить).
-            repo_path = _write_repo_file(reposdir, repo_name, baseurl, **opts)
+        for section_name, opts in mapping.items():
+            if not isinstance(opts, dict):
+                raise TypeError(f"legacy create_repo_conf: value for '{section_name}' must be a dict")
+            if "baseurl" not in opts:
+                raise TypeError(f"legacy create_repo_conf: repo '{section_name}' is missing required 'baseurl'")
+
+            # Копию opts модифицируем локально
+            local_opts = dict(opts)
+            baseurl = str(local_opts.pop("baseurl"))
+
+            # ВАЖНО: вынимаем 'name' (человекочитаемое) из опций,
+            # чтобы не передать его одновременно и позиционно (как section_name), и именованно
+            display_name = local_opts.pop("name", section_name)
+
+            repo_path = _write_repo_file(reposdir, section_name, baseurl, display_name=display_name, **local_opts)
             if first_path is None:
                 first_path = repo_path
 
-        # На всякий случай — если mapping пустой:
+        # Если mapping пуст — вернём путь по умолчанию (никто обычно не использует возвращаемое значение)
         return first_path or os.path.join(reposdir, "default.repo")
 
-    # Новый интерфейс: ожидаем минимум 3 позиционных аргумента
+    # --- Новый интерфейс: ожидаем минимум 3 позиционных аргумента ---
     if len(args) < 3:
-        # Попробуем достать по именам (на случай экзотического вызова)
+        # Попытка достать по именам (редкий случай)
         reposdir = kwargs.get("reposdir")
         name = kwargs.get("name")
         baseurl = kwargs.get("baseurl")
@@ -112,17 +126,20 @@ def create_repo_conf(*args: Any, **kwargs: Any) -> str:
             raise TypeError(
                 "create_repo_conf expects either (mapping, reposdir=...) or (reposdir, name, baseurl, **options)"
             )
-        # Сформируем позиционно и продолжим
         args = (reposdir, name, baseurl)
 
     reposdir = str(args[0])
-    name = str(args[1])
+    section_name = str(args[1])
     baseurl = str(args[2])
+
+    # Разбираем опции: если пришёл 'name' — это человекочитаемое имя
     options = dict(kwargs)
-    # Убедимся, что не протащили лишний 'reposdir' в options
-    if "reposdir" in options:
-        options.pop("reposdir")
-    return _write_repo_file(reposdir, name, baseurl, **options)
+    display_name = options.pop("name", section_name)
+
+    # На всякий случай уберём возможный дублирующийся 'reposdir' из options
+    options.pop("reposdir", None)
+
+    return _write_repo_file(reposdir, section_name, baseurl, display_name=display_name, **options)
 
 
 class Tdnf:
@@ -133,8 +150,8 @@ class Tdnf:
       - logger: объект логгера (имеет .debug/.info и т.п.)
       - releasever: передаётся в --releasever
       - reposdir:   передаётся в --setopt=reposdir=...
-      - docker_image: если задан — команда запускается в контейнере,
-                      при отсутствии образа происходит откат на хостовый `tdnf`
+      - docker_image: при наличии команда запускается в контейнере,
+                      при отсутствии образа откатывается на хостовый `tdnf`
       - installroot: передаётся в --installroot
 
     Метод run() возвращает (returncode, stdout+stderr).
@@ -232,7 +249,7 @@ class Tdnf:
             output = (proc.stdout or "") + (proc.stderr or "")
 
         if self.logger:
-            # Не info, чтобы не зашумлять; но при отладке полезно видеть весь вывод
+            # DEBUG — чтобы не зашумлять INFO-лог
             self.logger.debug(output)
 
         return proc.returncode, output
