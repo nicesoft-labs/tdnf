@@ -162,6 +162,23 @@ def test_repoquery(utils):
     d = json.loads("\n".join(ret['stdout']))
     assert type(d) is list
 
+def test_json_missing_gpg_key(utils):
+    pkgname = utils.config["sglversion_pkgname"]
+    utils.edit_config({'gpgcheck': '1'})
+    try:
+        ret = utils.run(['tdnf', '-j', '-y', 'install', pkgname])
+    finally:
+        utils.edit_config({'gpgcheck': '0'})
+
+    stdout = "\n".join(ret['stdout'])
+    stderr = "\n".join(ret['stderr'])
+
+    json.loads(stdout)
+    assert 'warning' not in stdout.lower()
+    assert 'warning' in stderr.lower()
+
+
+
 
 def test_updateinfo(utils):
     ret = utils.run(['tdnf', '-j', 'updateinfo'])
