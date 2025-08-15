@@ -7,6 +7,8 @@
  */
 
 #include "includes.h"
+#include <rpm/rpmlog.h>
+
 
 static bool isQuiet = false;
 static bool isJson = false;
@@ -40,6 +42,41 @@ bool GlobalGetDnfCheckUpdateCompat()
 {
     return isDnfCheckUpdateCompat;
 }
+
+int tdnfRpmlogCallback(rpmlogRec rec, rpmlogCallbackData data)
+{
+    rpmlogLvl lvl = RPMLOG_INFO;
+    const char *msg = NULL;
+
+    UNUSED(data);
+
+    if (rec)
+    {
+        lvl = rpmlogRecPriority(rec);
+        msg = rpmlogRecMessage(rec);
+    }
+
+    if (isJson && lvl < RPMLOG_ERR)
+    {
+        return 0;
+    }
+
+    int tdnfLevel = LOG_INFO;
+
+    if (lvl >= RPMLOG_ERR)
+    {
+        tdnfLevel = LOG_ERR;
+    }
+    if (lvl >= RPMLOG_CRIT)
+    {
+        tdnfLevel = LOG_CRIT;
+    }
+
+    log_console(tdnfLevel, "%s", msg ? msg : "");
+
+    return 0;
+}
+
 
 void log_console(int32_t loglevel, const char *format, ...)
 {
