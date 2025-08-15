@@ -1,4 +1,4 @@
-# tdnf - tiny dandified yum
+# tdnf - tiny dandified yum NiceOS
 
 In order to compile, from the checkout directory, run the following
 
