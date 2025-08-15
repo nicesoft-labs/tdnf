@@ -614,6 +614,7 @@ TDNFOpenHandle(
 
     GlobalSetQuiet(pArgs->nQuiet);
     GlobalSetJson(pArgs->nJsonOutput);
+    rpmlogSetCallback(tdnfRpmlogCallback, NULL);
 
     dwError = TDNFAllocateMemory(1, sizeof(TDNF), (void**)&pTdnf);
     BAIL_ON_TDNF_ERROR(dwError);
@@ -621,6 +622,8 @@ TDNFOpenHandle(
     dwError = TDNFCloneCmdArgs(pArgs, &pTdnf->pArgs);
     BAIL_ON_TDNF_ERROR(dwError);
 
+    rpmlogSetMask(RPMLOG_UPTO(TDNFConfGetRpmVerbosity(pTdnf)));
+    
     dwError = TDNFReadConfig(
                   pTdnf,
                   pTdnf->pArgs->pszConfFile,
