@@ -56,11 +56,13 @@ class Tdnf:
         releasever: Optional[str] = None,
         reposdir: Optional[str] = None,
         docker_image: Optional[str] = None,
+        installroot: Optional[str] = None,
     ) -> None:
         self.logger = logger
         self.releasever = releasever
         self.reposdir = reposdir
         self.docker_image = docker_image
+        self.installroot = installroot
 
     def run(
         self,
@@ -97,6 +99,8 @@ class Tdnf:
             cmd.extend(["--releasever", self.releasever])
         if self.reposdir:
             cmd.append(f"--setopt=reposdir={self.reposdir}")
+        if self.installroot:
+            cmd.extend(["--installroot", self.installroot])
         cmd.extend(args)
 
         docker_used = False
@@ -105,6 +109,8 @@ class Tdnf:
             docker_cmd = ["docker", "run", "--rm"]
             if self.reposdir:
                 docker_cmd.extend(["-v", f"{self.reposdir}:/etc/yum.repos.d"])
+            if self.installroot:
+                docker_cmd.extend(["-v", f"{self.installroot}:{self.installroot}"])
             docker_cmd.append(self.docker_image)
             docker_cmd.extend(cmd)
             cmd = docker_cmd
@@ -138,6 +144,8 @@ class Tdnf:
                 cmd.extend(["--releasever", self.releasever])
             if self.reposdir:
                 cmd.append(f"--setopt=reposdir={self.reposdir}")
+            if self.installroot:
+                cmd.extend(["--installroot", self.installroot])
             cmd.extend(args)
             if self.logger:
                 self.logger.debug("Running tdnf command: %s", " ".join(cmd))
