@@ -21,6 +21,9 @@
 #ifndef __COMMON_PROTOTYPES_H__
 #define __COMMON_PROTOTYPES_H__
 
+typedef struct rpmlogRec_s * rpmlogRec;
+typedef void * rpmlogCallbackData;
+
 //memory.c
 uint32_t
 TDNFAllocateMemory(
@@ -307,6 +310,12 @@ log_console(
     );
 
 int tdnflockAcquire(tdnflock lock);
+
+int
+tdnfRpmlogCallback(
+    rpmlogRec rec,
+    rpmlogCallbackData data
+    );
 
 void tdnflockRelease(tdnflock lock);
 
