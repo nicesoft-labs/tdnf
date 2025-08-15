@@ -99,6 +99,8 @@ class Tdnf:
             cmd.append(f"--setopt=reposdir={self.reposdir}")
         cmd.extend(args)
 
+        docker_used = False
+
         if self.docker_image:
             docker_cmd = ["docker", "run", "--rm"]
             if self.reposdir:
@@ -106,6 +108,7 @@ class Tdnf:
             docker_cmd.append(self.docker_image)
             docker_cmd.extend(cmd)
             cmd = docker_cmd
+            docker_used = True
 
         if self.logger:
             self.logger.debug("Running tdnf command: %s", " ".join(cmd))
@@ -118,6 +121,33 @@ class Tdnf:
         )
 
         output = proc.stdout + proc.stderr
+
+        # If a docker image was requested but not found, fall back to the host
+        # tdnf so that callers can continue without container images.
+        missing_image = (
+            "Unable to find image" in output or "manifest unknown" in output
+        )
+        if docker_used and proc.returncode != 0 and missing_image:
+            if self.logger:
+                self.logger.info(
+                    "Docker image %s not found; falling back to host tdnf",
+                    self.docker_image,
+                )
+            cmd = ["tdnf"]
+            if self.releasever:
+                cmd.extend(["--releasever", self.releasever])
+            if self.reposdir:
+                cmd.append(f"--setopt=reposdir={self.reposdir}")
+            cmd.extend(args)
+            if self.logger:
+                self.logger.debug("Running tdnf command: %s", " ".join(cmd))
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            output = proc.stdout + proc.stderr
 
         if self.logger:
             self.logger.debug(output)
